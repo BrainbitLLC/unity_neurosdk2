@@ -32,6 +32,7 @@ typedef NS_ENUM (UInt8, NTSensorFamily) {
 
     NTSensorFamilyLEEarBuds=12,
 
+
 };
 
 
@@ -56,9 +57,10 @@ typedef NS_ENUM (UInt8, NTSensorFamily) {
 @property (nonatomic, copy) NSString *_Nonnull Address;
 @property (nonatomic, copy) NSString *_Nonnull SerialNumber;
 @property (nonatomic) BOOL PairingRequared;
+@property (nonatomic) SInt16 RSSI;
 
 - (nonnull instancetype)init NS_UNAVAILABLE;
-- (nonnull instancetype)initWithSensFamily:(enum NTSensorFamily)sensFamily sensModel:(UInt8)sensModel name:(NSString *_Nonnull)name address:(NSString *_Nonnull)address serialNumber:(NSString *_Nonnull)serialNumber pairingRequared:(BOOL)pairingRequared NS_DESIGNATED_INITIALIZER;
+- (nonnull instancetype)initWithSensFamily:(enum NTSensorFamily)sensFamily sensModel:(UInt8)sensModel name:(NSString *_Nonnull)name address:(NSString *_Nonnull)address serialNumber:(NSString *_Nonnull)serialNumber pairingRequared:(BOOL)pairingRequared rssi:(SInt16)rssi NS_DESIGNATED_INITIALIZER;
 
 @end
 
@@ -112,7 +114,12 @@ typedef NS_ENUM (UInt8, NTSensorCommand)
     NTSensorCommandStartPhotoStimulation,
     NTSensorCommandStopPhotoStimulation,
     NTSensorCommandStartAcousticStimulation,
-    NTSensorCommandStopAcousticStimulation
+    NTSensorCommandStopAcousticStimulation,
+    NTSensorCommandFileSystemEnable,
+    NTSensorCommandFileSystemDisable,
+    NTSensorCommandFileSystemStreamClose,
+    NTSensorCommandStartCalibrateSignal,
+    NTSensorCommandStopCalibrateSignal
 };
 
 typedef NS_ENUM (UInt8, NTSensorParameter) {
@@ -147,7 +154,16 @@ typedef NS_ENUM (UInt8, NTSensorParameter) {
     NTSensorParameterSamplingFrequencyMEMS,
     NTSensorParameterSamplingFrequencyFPG,
     NTSensorParameterAmplifier,
-    NTSensorParameterSensorChannels
+    NTSensorParameterSensorChannels,
+    NTSensorParameterSamplingFrequencyResp,
+    NTSensorParameterSurveyId,
+    NTSensorParameterFileSystemStatus,
+    NTSensorParameterFileSystemDiskInfo,
+    NTSensorParameterReferentsShort,
+    NTSensorParameterReferentsGround,
+    NTSensorParameterSamplingFrequencyEnvelope,
+    NTSensorParameterChannelConfiguration,
+    NTSensorParameterElectrodeState
 };
 
 typedef NS_ENUM (UInt8, NTSensorParamAccess) {
@@ -180,6 +196,7 @@ typedef NS_ENUM (UInt8, NTSensorFilter) {
 
 typedef NS_ENUM (UInt8, NTSensorSamplingFrequency) {
     NTSensorSamplingFrequencyHz10,
+    NTSensorSamplingFrequencyHz20,
     NTSensorSamplingFrequencyHz100,
     NTSensorSamplingFrequencyHz125,
     NTSensorSamplingFrequencyHz250,
@@ -199,7 +216,9 @@ typedef NS_ENUM (UInt8, NTSensorGain){
     NTSensorGain6,
     NTSensorGain8,
     NTSensorGain12,
-    NTSensorGain24,
+    NTSensorGain5,
+	NTSensorGain2x,
+	NTSensorGain4x,
     NTSensorGainUnsupported
 };
 
@@ -217,10 +236,12 @@ typedef NS_ENUM (UInt8, NTSensorDataOffset) {
 };
 
 typedef NS_ENUM (UInt8, NTSensorExternalSwitchInput) {
-    NTSensorExternalSwitchInputMioElectrodesRespUSB,
-    NTSensorExternalSwitchInputMioElectrodes,
-    NTSensorExternalSwitchInputMioUSB,
-    NTSensorExternalSwitchInputRespUSB
+    NTSensorExternalSwitchInputElectrodesRespUSB,
+    NTSensorExternalSwitchInputElectrodes,
+    NTSensorExternalSwitchInputUSB,
+    NTSensorExternalSwitchInputRespUSB,
+    NTSensorExternalSwitchInputShort,
+    NTSensorExternalSwitchInputUnknown = 0xFF
 };
 
 typedef NS_ENUM (UInt8, NTSensorADCInput) {
@@ -493,6 +514,10 @@ typedef NS_ENUM (UInt8, NTCallibriSignalType)
     NTCallibriSignalTypeImpedanceBreathing = 5,
     NTCallibriSignalTypeUnknown = 6
 };
+
+
+
+
 
 
 

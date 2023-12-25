@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (NS_NONATOMIC_IOSONLY, readonly) NSString*_Nonnull Address;
 @property (NS_NONATOMIC_IOSONLY) NSString*_Nonnull SerialNumber;
 @property (NS_NONATOMIC_IOSONLY, readonly) NSNumber*_Nonnull BattPower;
+@property (NS_NONATOMIC_IOSONLY, readonly) NSNumber*_Nonnull ChannelsCount;
 
 @property (NS_NONATOMIC_IOSONLY, readonly) NTSensorSamplingFrequency SamplingFrequency;
 @property (NS_NONATOMIC_IOSONLY, readonly) NTSensorGain  Gain;

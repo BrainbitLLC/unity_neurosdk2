@@ -126,12 +126,16 @@ IReadOnlyList<SensorInfo> sensors = scanner.Sensors;
 ```
 
 `SensorInfo` contains information about device:
- - Name - the name of device
- - Address - MAC address of device (UUID for iOS/MacOS)
- - Sensor family - type of device
- - Serial number - serial number of the device
- - Sensor model - numerical value of the device model
- - Pairing requared - whether the device needs to be paired or not
+
+| Field | Type | Description |
+|--|--|--|
+|Name|string|the name of device|
+|Address|string|MAC address of device (UUID for iOS/MacOS)|
+|SerialNumber|string|device's serial number|
+|SensFamily|SensorFamily|type of device|
+|SensModel|byte|numerical value of the device model|
+|PairingRequired|bool|whether the device needs to be paired or not|
+|RSSI|short|current signal strength in dBm. The valid range is [-127, 126]|
 
 5. After you finish working with the scanner, you need to clean up the resources used. 
 

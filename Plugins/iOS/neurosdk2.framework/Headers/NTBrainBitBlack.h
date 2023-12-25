@@ -7,22 +7,23 @@
 #include "NTBrainBit.h"
 
 @interface NTBrainBitBlack : NTBrainBit
-- (instancetype)init NS_UNAVAILABLE;
+- (instancetype _Nonnull )init NS_UNAVAILABLE;
 
-@property (NS_NONATOMIC_IOSONLY) NTSensorAccelerometerSensitivity AccSens;      // mems, callibri, BB,Handbat etc
-@property (NS_NONATOMIC_IOSONLY) NTSensorGyroscopeSensitivity GyroSens;         // ||..||..||
-@property (NS_NONATOMIC_IOSONLY, readonly) NTSensorSamplingFrequency SamplingFrequencyFPG;      // FPG
-@property (NS_NONATOMIC_IOSONLY, readonly) NTSensorSamplingFrequency SamplingFrequencyMEMS;     // мемс
-@property (NS_NONATOMIC_IOSONLY, readonly) NTSensorAmpMode AmpMode;     // не у всех
-@property (NS_NONATOMIC_IOSONLY) NTIrAmplitude  IrAmplitudeHeadband;        //hb
-@property (NS_NONATOMIC_IOSONLY) NTRedAmplitude RedAmplitudeHeadband;       //hb
+@property (NS_NONATOMIC_IOSONLY) NTSensorAccelerometerSensitivity AccSens;
+@property (NS_NONATOMIC_IOSONLY) NTSensorGyroscopeSensitivity GyroSens;
+@property (NS_NONATOMIC_IOSONLY, readonly) NTSensorSamplingFrequency SamplingFrequencyFPG;
+@property (NS_NONATOMIC_IOSONLY, readonly) NTSensorSamplingFrequency SamplingFrequencyMEMS;
+@property (NS_NONATOMIC_IOSONLY, readonly) NTSensorSamplingFrequency SamplingFrequencyResist;
+@property (NS_NONATOMIC_IOSONLY, readonly) NTSensorAmpMode AmpMode;
+@property (NS_NONATOMIC_IOSONLY) NTIrAmplitude  IrAmplitudeHeadband;
+@property (NS_NONATOMIC_IOSONLY) NTRedAmplitude RedAmplitudeHeadband;
 
 
-- (void) setMEMSDataCallback:(void (^_Nullable)(NSArray<NTMEMSData*>*_Nonnull))callback;            // mems
-- (void) setAmpModeCallback:(void (^_Nullable)(NTSensorAmpMode))callback;       // ne u vseh
+- (void) setMEMSDataCallback:(void (^_Nullable)(NSArray<NTMEMSData*>*_Nonnull))callback;
+- (void) setAmpModeCallback:(void (^_Nullable)(NTSensorAmpMode))callback;
 - (void) setFPGDataCallbackNeuroSmart:(void (^_Nullable)(NSArray<NTFPGData*>*_Nonnull))callback;
 
--(void) PingNeuroSmart:(Byte)marker;        // ns
+-(void) PingNeuroSmart:(Byte)marker;
 
 @end
 

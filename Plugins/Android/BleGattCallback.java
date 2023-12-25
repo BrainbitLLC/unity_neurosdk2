@@ -1,41 +1,41 @@
 package com.neurosdk2.ble;
+
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 
-public class BleGattCallback extends BluetoothGattCallback
-{
+public class BleGattCallback extends BluetoothGattCallback {
     private final long mNativeCallbackPtr;
 
-    public BleGattCallback(long nativeCallbackPtr)
-    {
+    public BleGattCallback(long nativeCallbackPtr) {
         mNativeCallbackPtr = nativeCallbackPtr;
     }
 
     @Override
-    public void finalize()
-    {
+    public void finalize() {
         destroy(mNativeCallbackPtr);
     }
 
     @Override
-    public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic)
-    {
+    public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
         String characteristicUUID = characteristic.getUuid().toString();
         String seriveUUID = characteristic.getService().getUuid().toString();
         byte[] data = characteristic.getValue();
-        onCharacteristicChanged(mNativeCallbackPtr, characteristicUUID,seriveUUID,data);
+        onCharacteristicChanged(mNativeCallbackPtr, characteristicUUID, seriveUUID, data);
     }
 
     @Override
-    public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState){
+    public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
         onConnectionStateChange(mNativeCallbackPtr, status, newState);
+
     }
 
     @Override
-    public void onServicesDiscovered(BluetoothGatt gatt, int status){
+    public void onServicesDiscovered(BluetoothGatt gatt, int status) {
         onServicesDiscovered(mNativeCallbackPtr, status);
+//        boolean res = gatt.requestMtu(512);
+//        Log.i("BLE", "MTU requested");
     }
 
     @Override
@@ -51,8 +51,12 @@ public class BleGattCallback extends BluetoothGattCallback
 
     @Override
     public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status){
-
         onDescriptorWrite(mNativeCallbackPtr, descriptor.getUuid().toString(),descriptor.getCharacteristic().getUuid().toString(), status);
+    }
+
+    @Override
+    public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+        onMtuChanged(mNativeCallbackPtr, mtu, status);
     }
 
     private static native void destroy(long nativeCallbackPtr);
@@ -62,4 +66,5 @@ public class BleGattCallback extends BluetoothGattCallback
     private static native void onDescriptorWrite(long nativeCallbackPtr, String uuid, String charUUID,int status);
     private static native void onConnectionStateChange(long nativeCallbackPtr, int status, int newState);
     private static native void onServicesDiscovered(long nativeCallbackPtr, int status);
+    private static native void onMtuChanged(long nativeCallbackPtr, int mtu, int status);
 }
