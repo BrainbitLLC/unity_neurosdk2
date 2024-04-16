@@ -29,9 +29,7 @@ public class BLEBroadcastReceiver extends BroadcastReceiver {
         try{
             context.unregisterReceiver(this);
         }catch (Exception ex)
-        {
-            int i = 0;
-        }
+        { }
     }
     public BLEBroadcastReceiver(long nativePointer) {
         this.nativePointer = nativePointer;

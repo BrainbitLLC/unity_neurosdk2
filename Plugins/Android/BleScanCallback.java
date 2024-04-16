@@ -21,9 +21,7 @@ public class BleScanCallback extends ScanCallback {
         super.onScanResult(callbackType, result);
         try {
             OnScanResult(nativePointer,callbackType,result);
-        } catch (Exception e) {
-            //Log.d(TAG, "Error +" + e.getMessage());
-        }
+        } catch (Exception e) { }
     }
 
     @Override
@@ -34,9 +32,7 @@ public class BleScanCallback extends ScanCallback {
             {
                 OnBatchScanResult(nativePointer,results);
             }
-        } catch (Exception e) {
-            //Log.d(TAG, "Error +" + e.getMessage());
-        }
+        } catch (Exception e) { }
     }
 
     @Override
@@ -44,9 +40,7 @@ public class BleScanCallback extends ScanCallback {
         super.onScanFailed(errorCode);
         try {
             OnScanFailed(nativePointer,errorCode);
-        } catch (Exception e) {
-            //Log.d(TAG, "Error +" + e.getMessage());
-        }
+        } catch (Exception e) { }
     }
     @Override
     protected void finalize() throws Throwable {
@@ -55,9 +49,7 @@ public class BleScanCallback extends ScanCallback {
     }
 
     private native void OnScanResult(long pointer,int callbackType,ScanResult result);
-
     private native void OnBatchScanResult(long pointer,List<ScanResult> result);
-
     private native void OnScanFailed(long pointer,int errorCode);
     private native void OnDestroy(long pointer);
 }

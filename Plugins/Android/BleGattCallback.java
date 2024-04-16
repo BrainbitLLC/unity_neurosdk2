@@ -34,13 +34,10 @@ public class BleGattCallback extends BluetoothGattCallback {
     @Override
     public void onServicesDiscovered(BluetoothGatt gatt, int status) {
         onServicesDiscovered(mNativeCallbackPtr, status);
-//        boolean res = gatt.requestMtu(512);
-//        Log.i("BLE", "MTU requested");
     }
 
     @Override
     public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status){
-
         onCharacteristicRead(mNativeCallbackPtr, characteristic.getUuid().toString(), status);
     }
 
