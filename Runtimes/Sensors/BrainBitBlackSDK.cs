@@ -188,16 +188,35 @@ namespace NeuroSDK
         {
             get
             {
-                BrainBit2AmplifierParam val;
+                BrainBit2AmplifierParamNative val;
                 OpStatus opSt;
                 byte error = SDKApiFactory.Inst.ReadAmplifierParamBrainBit2(_sensorPtr, out val, out opSt);
                 SDKApiFactory.ThrowIfError(opSt, error);
-                return val;
+            
+                BrainBit2AmplifierParam res = new()
+                {
+                    Current = val.Current,
+                    ChGain = new SensorGain[val.ChGain.Length],
+                    ChSignalMode = new BrainBit2ChannelMode[val.ChSignalMode.Length],
+                    ChResistUse = Array.ConvertAll(val.ChResistUse, item => item == 1)
+                };
+                val.ChSignalMode.CopyTo(res.ChSignalMode, 0);
+                val.ChGain.CopyTo(res.ChGain, 0);
+                return res;
             }
             set
             {
                 OpStatus opSt;
-                byte error = SDKApiFactory.Inst.WriteAmplifierParamBrainBit2(_sensorPtr, value, out opSt);
+                BrainBit2AmplifierParamNative setter = new()
+                {
+                    Current = value.Current,
+                    ChGain = new SensorGain[value.ChGain.Length],
+                    ChSignalMode = new BrainBit2ChannelMode[value.ChSignalMode.Length],
+                    ChResistUse = Array.ConvertAll(value.ChResistUse, item => item ? (byte)1 : (byte)0)
+                };
+                setter.ChSignalMode.CopyTo(value.ChSignalMode, 0);
+                setter.ChGain.CopyTo(value.ChGain, 0);
+                byte error = SDKApiFactory.Inst.WriteAmplifierParamBrainBit2(_sensorPtr, setter, out opSt);
                 SDKApiFactory.ThrowIfError(opSt, error);
             }
         }

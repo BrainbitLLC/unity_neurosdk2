@@ -76,6 +76,7 @@ namespace NeuroSDK
         SensorGain Gain { get; }
         SensorDataOffset DataOffset { get; }
         SensorFirmwareMode FirmwareMode { get; }
+        int ChannelsCount { get; }
 
         ///// <summary>
         ///// Headband Sensor IrAmplitude

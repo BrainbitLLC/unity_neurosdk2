@@ -47,6 +47,24 @@ namespace NeuroSDK
         }
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 
+        public new SensorGain Gain
+        {
+            get
+            {
+                SensorGain val;
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.ReadGainSensor(_sensorPtr, out val, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+                return val;
+            }
+            set
+            {
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.WriteGainSensor(_sensorPtr, value, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+            }
+        }
+
         public override void Dispose()
         {
             if (!_disposed)

@@ -8,6 +8,8 @@
 @interface NTBrainBit : NTSensor
 - (instancetype)init NS_UNAVAILABLE;
 
+@property (NS_NONATOMIC_IOSONLY, readwrite) NTSensorGain Gain;
+
 - (void) setResistCallbackBrainBit:(void (^_Nullable)(NTBrainBitResistData*_Nonnull))callback;
 - (void) setSignalDataCallbackBrainBit:(void (^_Nullable)(NSArray<NTBrainBitSignalData*>*_Nonnull))callback;
 

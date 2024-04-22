@@ -23,6 +23,7 @@ extern UInt16 const SensorSnLen;
 extern UInt16 const SensorChannelNameLen;
 extern UInt16 const NeuroEEGMaxChCount;
 extern UInt16 const FileNameMaxLen;
+extern UInt16 const BrainBit2MaxChCount;
 
 
 + (void) raise_exception_if: (OpStatus) opStatus;

@@ -81,6 +81,10 @@ namespace NeuroSDK
                     return new BrainBitSensor(sensorPtr);
                 case SensorFamily.SensorLEBrainBitBlack:
                     return new BrainBitBlackSensor(sensorPtr);
+                case SensorFamily.SensorLEBrainBit2:
+                case SensorFamily.SensorLEBrainBitPro:
+                case SensorFamily.SensorLEBrainBitFlex:
+                    return new BrainBit2Sensor(sensorPtr);
 
                 default:
                     return new Sensor(sensorPtr);
@@ -153,13 +157,15 @@ namespace NeuroSDK
     public class Sensor : ISensor
     {
         protected bool _disposed = false;
-        protected IntPtr _sensorPtr;
+        internal IntPtr _sensorPtr;
         private IntPtr _this;
 
         private IntPtr _batteryCallbackHandle;
+        private IntPtr _batteryVoltageCallbackHandle;
         private IntPtr _connectionStateCallbackHandle;
 
         private readonly BatteryCallbackSensor _batteryCallback;
+        private readonly BatteryVoltageCallbackSensor _batteryVoltageCallback;
         private readonly ConnectionStateCallbackSensor _connectionStateCallback;
 
         internal Sensor(IntPtr sensorPtr)
@@ -173,6 +179,12 @@ namespace NeuroSDK
             if (IsSupportedParameter(SensorParameter.ParameterBattPower))
             {
                 error = SDKApiFactory.Inst.AddBatteryCallback(_sensorPtr, _batteryCallback, out _batteryCallbackHandle, _this, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+            }
+            _batteryVoltageCallback = BatteryVoltageCallback;
+            if (IsSupportedParameter(SensorParameter.ParameterBattVoltage))
+            {
+                error = SDKApiFactory.Inst.AddBatteryVoltageCallback(_sensorPtr, _batteryVoltageCallback, out _batteryVoltageCallbackHandle, _this, out opSt);
                 SDKApiFactory.ThrowIfError(opSt, error);
             }
 
@@ -290,6 +302,17 @@ namespace NeuroSDK
                 return val;
             }
         }
+        public int BattVoltage
+        {
+            get
+            {
+                int val;
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.ReadBattVoltageSensor(_sensorPtr, out val, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+                return val;
+            }
+        }
         public SensorVersion Version
         {
             get
@@ -349,8 +372,11 @@ namespace NeuroSDK
             }
         }
 
+        public int ChannelsCount => SDKApiFactory.Inst.GetChannelsCountSensor(_sensorPtr);
+
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         public event BatteryChanged? EventBatteryChanged;
+        public event BatteryChanged? EventBatteryVoltageChanged;
         public event SensorStateChanged? EventSensorStateChanged;
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 
@@ -392,6 +418,12 @@ namespace NeuroSDK
         {
             var sensor = SDKSensor(userData);
             sensor?.EventBatteryChanged?.Invoke(sensor, battPower);
+        }
+        [AOT.MonoPInvokeCallback(typeof(BatteryVoltageCallbackSensor))]
+        private static void BatteryVoltageCallback(IntPtr ptr, int battPower, IntPtr userData)
+        {
+            var sensor = SDKSensor(userData);
+            sensor?.EventBatteryVoltageChanged?.Invoke(sensor, battPower);
         }
         [AOT.MonoPInvokeCallback(typeof(ConnectionStateCallbackSensor))]
         private static void ConnectionStateCallback(IntPtr ptr, SensorState state, IntPtr userData)
@@ -435,6 +467,7 @@ namespace NeuroSDK
             try
             {
                 SDKApiFactory.Inst.RemoveBatteryCallback(_batteryCallbackHandle);
+                SDKApiFactory.Inst.RemoveBatteryVoltageCallback(_batteryVoltageCallbackHandle);
                 SDKApiFactory.Inst.RemoveConnectionStateCallback(_connectionStateCallbackHandle);
 
                 SDKApiFactory.Inst.FreeSensor(_sensorPtr);

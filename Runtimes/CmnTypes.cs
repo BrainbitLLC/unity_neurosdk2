@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
@@ -17,6 +18,7 @@ namespace NeuroSDK
         public const int NeuroBAMMaxChCount = 8;
         
         public const int BrainBit2MaxChCount = 8;
+        
     }
 
     /// <summary>
@@ -53,11 +55,13 @@ namespace NeuroSDK
         SensorLEBrainBit2 = 18,
         SensorLEBrainBitPro = 19,
         SensorLEBrainBitFlex = 20,
+        
     }
 
     /// <summary>
     /// Sensor information
     /// </summary>
+    [Serializable]
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     public struct SensorInfo
     {
@@ -140,7 +144,9 @@ namespace NeuroSDK
 	    CommandFileSystemDisable,
 	    CommandFileSystemStreamClose,
         CommandStartCalibrateSignal,
-	    CommandStopCalibrateSignal
+	    CommandStopCalibrateSignal,
+        CommandPhotoStimEnable,
+	    CommandPhotoStimDisable
     }
     /// <summary>
     /// Sensor parameters
@@ -188,7 +194,12 @@ namespace NeuroSDK
         ParameterSamplingFrequencyEnvelope,
 	    ParameterChannelConfiguration,
 	    ParameterElectrodeState,
-        ParameterChannelResistConfiguration
+        ParameterChannelResistConfiguration,
+        ParameterBattVoltage,
+	    ParameterPhotoStimTimeDefer,
+        ParameterPhotoStimSyncState,
+	    ParameterSensorPhotoStim,
+	    ParameterPhotoStimMode
     }
     /// <summary>
     /// Sensor parameter access
@@ -233,6 +244,13 @@ namespace NeuroSDK
         FrequencyHz2000,
         FrequencyHz4000,
         FrequencyHz8000,
+        FrequencyHz10000,
+	    FrequencyHz12000,
+	    FrequencyHz16000,
+	    FrequencyHz24000,
+	    FrequencyHz32000,
+	    FrequencyHz48000,
+	    FrequencyHz64000,
         FrequencyUnsupported
     }
     /// <summary>
@@ -295,6 +313,7 @@ namespace NeuroSDK
     /// <summary>
     /// Sensor version
     /// </summary>
+    [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public struct SensorVersion
     {
@@ -637,7 +656,8 @@ namespace NeuroSDK
         EDA = 3,// GSR
         StrainGaugeBreathing = 4,
         ImpedanceBreathing = 5,
-        Unknown = 6
+        TenzoBreathing = 6,
+        Unknown = 7
     }
     /// <summary>
     /// Quaternion Data
@@ -749,18 +769,16 @@ namespace NeuroSDK
         ChModeShort,
         ChModeNormal
     };
-    [StructLayout(LayoutKind.Sequential)]
+    
     public struct BrainBit2AmplifierParam
     {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.BrainBit2MaxChCount)]
         public BrainBit2ChannelMode[] ChSignalMode;
-        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = SdkLibConst.BrainBit2MaxChCount)]
         public bool[] ChResistUse;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.BrainBit2MaxChCount)]
         public SensorGain[] ChGain;
         public GenCurrent Current;
     }
 
+    
     #endregion
 
     public delegate void SensorsChanged(IScanner scanner, IReadOnlyList<SensorInfo> sensors);

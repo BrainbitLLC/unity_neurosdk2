@@ -6,15 +6,19 @@
 	<dict>
 		<key>Headers/NTBrainBit.h</key>
 		<data>
-		Wgij4x/x+OogWLMNVW/gNOOm4rg=
+		kr9PhYyvsfaV41F70Ypd58jMbTM=
+		</data>
+		<key>Headers/NTBrainBit2.h</key>
+		<data>
+		qTdyrFkMcszbRw7ebo1D1hlIK60=
 		</data>
 		<key>Headers/NTBrainBitBlack.h</key>
 		<data>
-		Zy06oMe4ax+yoiVPcUBV37yzT50=
+		I/zOxfR4/zGHCcWt6SX9K1pkIiQ=
 		</data>
 		<key>Headers/NTCallibri.h</key>
 		<data>
-		J9icx/rnUjcTyNOrfBcIuaCTw6E=
+		pUu23RpcbY3SOQqklvqfgyMVDnw=
 		</data>
 		<key>Headers/NTDeviceFactory.h</key>
 		<data>
@@ -26,23 +30,23 @@
 		</data>
 		<key>Headers/NTSensor.h</key>
 		<data>
-		5AAQ+hedyC8uOWZE7vDJrYexy0s=
+		EZOx2izdHzRfoH0jspqS6vhfVxc=
 		</data>
 		<key>Headers/NTTypes.h</key>
 		<data>
-		8M1oVbcQshSxs5H4dYl3DV5YETM=
+		ZVcW/edu1dGK2j8RDyf+RYVU8f4=
 		</data>
 		<key>Headers/NTUtils.h</key>
 		<data>
-		EGfYnmOjFtCG+lXoO8A7dqiwVIU=
+		D5V6y/v7rcecjselkQd8/lE5gnA=
 		</data>
 		<key>Headers/neurosdk.h</key>
 		<data>
-		9zqL5Jo4beoekevuMhSMuWLXWNw=
+		9LC9joOov6CFCAE8WRsOy3MVzBo=
 		</data>
 		<key>Info.plist</key>
 		<data>
-		eUbrgHacRLdJWJ+tElEnZBb/EmQ=
+		zBctnmdGL8qUbBWEl5uWo9dyX94=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -55,21 +59,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			hAtePz2scO2RF6c4aze+im7owsqfhAysh89DoChLFyM=
+			O8eFxB/rEdCXtn6Z4+y7SGZFs3zmL7rRAc7pxSi4zLE=
+			</data>
+		</dict>
+		<key>Headers/NTBrainBit2.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			b7SYxJvtVfLxTCHj8i6xrslw3VMkN7MRkB/adKi4RHo=
 			</data>
 		</dict>
 		<key>Headers/NTBrainBitBlack.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			O73iBs2/St4uCMVlIUYX4pwm40XOjvqaZ1olSecF4Qk=
+			DocZhpz+XpTHE5BCIL9ybnBrtWiv0mhf1YpK7Csb/Jk=
 			</data>
 		</dict>
 		<key>Headers/NTCallibri.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			0YA1ZHC3lsSilhhT1r8PWCMwiJizVqQ1nXcjdJBTxVc=
+			yV01zxs/0w5waJUIxZJ6e4ZH3DhtFZe0oRjiUELLgmc=
 			</data>
 		</dict>
 		<key>Headers/NTDeviceFactory.h</key>
@@ -90,28 +101,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			nfF+GQXeRoDR8+fiGo11bO29sAXE/5VaMUCqjAYdESQ=
+			sDRVZJiKdblIraGzD9nDgyTfCK8aaiTYF0E96PU4EDM=
 			</data>
 		</dict>
 		<key>Headers/NTTypes.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			bCjBqa5pp2f3ugARzj7WM7evlMYWLjwBJg+TddvxwOM=
+			+VclxPq28z2kfp+YwOVwa3Wj8ZNnEQQjcMkrtK9XHaU=
 			</data>
 		</dict>
 		<key>Headers/NTUtils.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			CiDhhGlXkpyXnmxzC5sQaObjiz8w9DdLgpWEe2A69M4=
+			mvHYlTA1cEB8/EYvuEUsFN7YpEzA59OcFgMIbXswqtk=
 			</data>
 		</dict>
 		<key>Headers/neurosdk.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			AwlGiEMLaLTfRgX9QRLFlbWRTPX+vNjp7hyUTfJNYxs=
+			/vOnVjZh0kyjl1ZUhS6hBTFvkCTYtbOLcAxkWmpRlTE=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>

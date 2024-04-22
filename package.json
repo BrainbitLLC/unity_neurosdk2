@@ -1,6 +1,6 @@
 {
   "name": "com.neurotech.neurosdk2",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "displayName": "NeuroSDK2",
   "description": "The Neurosdk library is designed to work with BrainBit, BrainBitBlack, Callibri and Kolibri devices.",
   "unity": "2020.1",

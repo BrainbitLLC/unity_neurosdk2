@@ -85,12 +85,27 @@ namespace NeuroSDK
         public IntPtr Referents;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BrainBit2AmplifierParamNative
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.BrainBit2MaxChCount)]
+        public BrainBit2ChannelMode[] ChSignalMode;
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = SdkLibConst.BrainBit2MaxChCount)]
+        public byte[] ChResistUse;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.BrainBit2MaxChCount)]
+        public SensorGain[] ChGain;
+        public GenCurrent Current;
+    }
+
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     internal delegate void SensorsCallbackScanner(IntPtr ptr, IntPtr sensors, IntPtr szSensors, IntPtr userData);
 
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void BatteryCallbackSensor(IntPtr ptr, int battPower, IntPtr userData);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void BatteryVoltageCallbackSensor(IntPtr ptr, int battVoltage, IntPtr userData);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void MEMSDataCallbackSensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] MEMSData[] dataArray, [In] IntPtr dataSize, IntPtr userData);
 
@@ -135,6 +150,7 @@ namespace NeuroSDK
     internal delegate void ResistCallbackBrainBit2Sensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] ResistRefChannelsDataNative[] dataArray, [In] int dataSize, IntPtr userData);
 
 
+
     internal interface ISDKApi
     {
         IntPtr CreateScanner(SensorFamily[] filters, out OpStatus outStatus);
@@ -172,10 +188,12 @@ namespace NeuroSDK
         byte ReadSerialNumberSensor(IntPtr ptr, out string serialNumberOut, out OpStatus outStatus);
         byte WriteSerialNumberSensor(IntPtr ptr, string serialNumber, out OpStatus outStatus);
         byte ReadBattPowerSensor(IntPtr ptr, out int battPowerOut, out OpStatus outStatus);
-
+        byte ReadBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus);
         byte ReadSamplingFrequencySensor(IntPtr ptr, out SensorSamplingFrequency samplingFrequencyOut, out OpStatus outStatus);
-        
+        int GetChannelsCountSensor(IntPtr ptr);        
         byte ReadGainSensor(IntPtr ptr, out SensorGain gainOut, out OpStatus outStatus);
+        byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
+
         byte ReadDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus);
         byte ReadSamplingFrequencyMEMSSensor(IntPtr ptr, out SensorSamplingFrequency samplingFrequencyOut, out OpStatus outStatus);
         byte ReadAccelerometerSensSensor(IntPtr ptr, out SensorAccelerometerSensitivity accSensOut, out OpStatus outStatus);
@@ -208,13 +226,14 @@ namespace NeuroSDK
 
         byte AddBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         void RemoveBatteryCallback(IntPtr handle);
+        byte AddBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveBatteryVoltageCallback(IntPtr handle);
 
         byte AddConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         void RemoveConnectionStateCallback(IntPtr handle);
 
         byte ReadHardwareFiltersSensor(IntPtr ptr, out SensorFilter[] filtersOut, out OpStatus outStatus);
 	    byte WriteHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, out OpStatus outStatus);
-        byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
         byte ReadExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus);
 	    byte WriteExternalSwitchSensor(IntPtr ptr, SensorExternalSwitchInput extSwInput, out OpStatus outStatus);
         byte ReadColorCallibri(IntPtr ptr, out CallibriColorType callibriColorOut, out OpStatus outStatus);
@@ -276,8 +295,8 @@ namespace NeuroSDK
 
         byte ReadSupportedChannelsBrainBit2(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus);
 
-	    byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus);
-	    byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus);
+	    byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus);
+	    byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus);
 
     }
 #if !__IOS__
@@ -349,6 +368,8 @@ namespace NeuroSDK
         private static extern byte writeSerialNumberSensor(IntPtr ptr, StringBuilder serialNumber, int szSerialNumber, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readBattPowerSensor(IntPtr ptr, out int battPowerOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus);
         
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -356,6 +377,9 @@ namespace NeuroSDK
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readGainSensor(IntPtr ptr, out SensorGain gainOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
+
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus);
@@ -414,6 +438,10 @@ namespace NeuroSDK
         private static extern byte addBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeBatteryCallback(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryVoltageCallback(IntPtr handle);
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -424,8 +452,6 @@ namespace NeuroSDK
         private static extern byte readHardwareFiltersSensor(IntPtr ptr, [In, Out] SensorFilter[] filtersOut, ref int szFiltersInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, int szFilters, out OpStatus outStatus);
-        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -521,9 +547,9 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeResistCallbackBrainBit2(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus);
+        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus);
+        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus);
 
         
         public IntPtr CreateScanner(SensorFamily[] filters, out OpStatus outStatus)
@@ -576,6 +602,10 @@ namespace NeuroSDK
             return disconnectSensor(ptr, out outStatus);
         }
 
+        public int GetChannelsCountSensor(IntPtr ptr)
+        {
+            return getChannelsCountSensor(ptr);
+        }
         public int GetFeaturesCountSensor(IntPtr ptr)
         {
             return getFeaturesCountSensor(ptr);
@@ -664,6 +694,10 @@ namespace NeuroSDK
         {
             return readBattPowerSensor(ptr, out battPowerOut, out outStatus);
         }
+        public byte ReadBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus)
+        {
+            return readBattVoltageSensor(ptr, out battVoltageOut, out outStatus);
+        }
         
         public byte ReadSamplingFrequencySensor(IntPtr ptr, out SensorSamplingFrequency samplingFrequencyOut, out OpStatus outStatus)
         {
@@ -674,6 +708,11 @@ namespace NeuroSDK
         {
             return readGainSensor(ptr, out gainOut, out outStatus);
         }
+        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
+        {
+            return writeGainSensor(ptr, gain, out outStatus);
+        }
+
         
         public byte ReadDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus)
         {
@@ -733,10 +772,6 @@ namespace NeuroSDK
         public byte WriteHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, out OpStatus outStatus)
         {
             return writeHardwareFiltersSensor(ptr, filters, filters.Length, out outStatus);
-        }
-        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
-        {
-            return writeGainSensor(ptr, gain, out outStatus);
         }
         public byte ReadExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus)
         {
@@ -964,6 +999,14 @@ namespace NeuroSDK
         {
             removeBatteryCallback(handle);
         }
+        public byte AddBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryVoltageCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryVoltageCallback(IntPtr handle)
+        {
+            removeBatteryVoltageCallback(handle);
+        }
         
         public byte AddConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
@@ -1003,7 +1046,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus)
+        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
             var res = readAmplifierParamBrainBit2(ptr, out ampParamOut, out outStatus);
             if (outStatus.Success)
@@ -1017,7 +1060,7 @@ namespace NeuroSDK
                 }
                 if (ampParamOut.ChResistUse.Length != cnt)
                 {
-                    var chResistUse = new bool[cnt];
+                    var chResistUse = new byte[cnt];
                     Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
                     ampParamOut.ChResistUse = chResistUse;
                 }
@@ -1030,7 +1073,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus)
+        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus)
         {
             var cnt = SdkLibConst.BrainBit2MaxChCount;
             if (ampParam.ChSignalMode.Length != cnt)
@@ -1041,7 +1084,7 @@ namespace NeuroSDK
             }
             if (ampParam.ChResistUse.Length != cnt)
             {
-                var chResistUse = new bool[cnt];
+                var chResistUse = new byte[cnt];
                 Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
                 ampParam.ChResistUse = chResistUse;
             }
@@ -1123,6 +1166,8 @@ namespace NeuroSDK
         private static extern byte writeSerialNumberSensor(IntPtr ptr, StringBuilder serialNumber, int szSerialNumber, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readBattPowerSensor(IntPtr ptr, out int battPowerOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus);
         
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -1130,6 +1175,9 @@ namespace NeuroSDK
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readGainSensor(IntPtr ptr, out SensorGain gainOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
+
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus);
@@ -1188,6 +1236,10 @@ namespace NeuroSDK
         private static extern byte addBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeBatteryCallback(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryVoltageCallback(IntPtr handle);
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -1198,8 +1250,6 @@ namespace NeuroSDK
         private static extern byte readHardwareFiltersSensor(IntPtr ptr, [In, Out] SensorFilter[] filtersOut, ref int szFiltersInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, int szFilters, out OpStatus outStatus);
-        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -1295,9 +1345,9 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeResistCallbackBrainBit2(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus);
+        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus);
+        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus);
 
 
         public IntPtr CreateScanner(SensorFamily[] filters, out OpStatus outStatus)
@@ -1350,6 +1400,10 @@ namespace NeuroSDK
             return disconnectSensor(ptr, out outStatus);
         }
 
+        public int GetChannelsCountSensor(IntPtr ptr)
+        {
+            return getChannelsCountSensor(ptr);
+        }
         public int GetFeaturesCountSensor(IntPtr ptr)
         {
             return getFeaturesCountSensor(ptr);
@@ -1438,6 +1492,10 @@ namespace NeuroSDK
         {
             return readBattPowerSensor(ptr, out battPowerOut, out outStatus);
         }
+        public byte ReadBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus)
+        {
+            return readBattVoltageSensor(ptr, out battVoltageOut, out outStatus);
+        }
         
         public byte ReadSamplingFrequencySensor(IntPtr ptr, out SensorSamplingFrequency samplingFrequencyOut, out OpStatus outStatus)
         {
@@ -1448,6 +1506,11 @@ namespace NeuroSDK
         {
             return readGainSensor(ptr, out gainOut, out outStatus);
         }
+        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
+        {
+            return writeGainSensor(ptr, gain, out outStatus);
+        }
+
         
         public byte ReadDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus)
         {
@@ -1507,10 +1570,6 @@ namespace NeuroSDK
         public byte WriteHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, out OpStatus outStatus)
         {
             return writeHardwareFiltersSensor(ptr, filters, filters.Length, out outStatus);
-        }
-        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
-        {
-            return writeGainSensor(ptr, gain, out outStatus);
         }
         public byte ReadExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus)
         {
@@ -1738,6 +1797,14 @@ namespace NeuroSDK
         {
             removeBatteryCallback(handle);
         }
+        public byte AddBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryVoltageCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryVoltageCallback(IntPtr handle)
+        {
+            removeBatteryVoltageCallback(handle);
+        }
         
         public byte AddConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
@@ -1777,7 +1844,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus)
+        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
             var res = readAmplifierParamBrainBit2(ptr, out ampParamOut, out outStatus);
             if (outStatus.Success)
@@ -1791,7 +1858,7 @@ namespace NeuroSDK
                 }
                 if (ampParamOut.ChResistUse.Length != cnt)
                 {
-                    var chResistUse = new bool[cnt];
+                    var chResistUse = new byte[cnt];
                     Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
                     ampParamOut.ChResistUse = chResistUse;
                 }
@@ -1804,7 +1871,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus)
+        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus)
         {
             var cnt = SdkLibConst.BrainBit2MaxChCount;
             if (ampParam.ChSignalMode.Length != cnt)
@@ -1815,7 +1882,7 @@ namespace NeuroSDK
             }
             if (ampParam.ChResistUse.Length != cnt)
             {
-                var chResistUse = new bool[cnt];
+                var chResistUse = new byte[cnt];
                 Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
                 ampParam.ChResistUse = chResistUse;
             }
@@ -1897,6 +1964,9 @@ namespace NeuroSDK
         private static extern byte writeSerialNumberSensor(IntPtr ptr, StringBuilder serialNumber, int szSerialNumber, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readBattPowerSensor(IntPtr ptr, out int battPowerOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus);
+
         
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -1904,6 +1974,9 @@ namespace NeuroSDK
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readGainSensor(IntPtr ptr, out SensorGain gainOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
+
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus);
@@ -1962,6 +2035,10 @@ namespace NeuroSDK
         private static extern byte addBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeBatteryCallback(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryVoltageCallback(IntPtr handle);
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -1972,8 +2049,6 @@ namespace NeuroSDK
         private static extern byte readHardwareFiltersSensor(IntPtr ptr, [In, Out] SensorFilter[] filtersOut, ref int szFiltersInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, int szFilters, out OpStatus outStatus);
-        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -2069,9 +2144,9 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeResistCallbackBrainBit2(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus);
+        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus);
+        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus);
 
 
         public IntPtr CreateScanner(SensorFamily[] filters, out OpStatus outStatus)
@@ -2124,6 +2199,10 @@ namespace NeuroSDK
             return disconnectSensor(ptr, out outStatus);
         }
 
+        public int GetChannelsCountSensor(IntPtr ptr)
+        {
+            return getChannelsCountSensor(ptr);
+        }
         public int GetFeaturesCountSensor(IntPtr ptr)
         {
             return getFeaturesCountSensor(ptr);
@@ -2212,6 +2291,10 @@ namespace NeuroSDK
         {
             return readBattPowerSensor(ptr, out battPowerOut, out outStatus);
         }
+        public byte ReadBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus)
+        {
+            return readBattVoltageSensor(ptr, out battVoltageOut, out outStatus);
+        }
         
         public byte ReadSamplingFrequencySensor(IntPtr ptr, out SensorSamplingFrequency samplingFrequencyOut, out OpStatus outStatus)
         {
@@ -2222,6 +2305,11 @@ namespace NeuroSDK
         {
             return readGainSensor(ptr, out gainOut, out outStatus);
         }
+        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
+        {
+            return writeGainSensor(ptr, gain, out outStatus);
+        }
+
         
         public byte ReadDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus)
         {
@@ -2281,10 +2369,6 @@ namespace NeuroSDK
         public byte WriteHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, out OpStatus outStatus)
         {
             return writeHardwareFiltersSensor(ptr, filters, filters.Length, out outStatus);
-        }
-        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
-        {
-            return writeGainSensor(ptr, gain, out outStatus);
         }
         public byte ReadExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus)
         {
@@ -2512,6 +2596,14 @@ namespace NeuroSDK
         {
             removeBatteryCallback(handle);
         }
+        public byte AddBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryVoltageCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryVoltageCallback(IntPtr handle)
+        {
+            removeBatteryVoltageCallback(handle);
+        }
         
         public byte AddConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
@@ -2551,7 +2643,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus)
+        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
             var res = readAmplifierParamBrainBit2(ptr, out ampParamOut, out outStatus);
             if (outStatus.Success)
@@ -2565,7 +2657,7 @@ namespace NeuroSDK
                 }
                 if (ampParamOut.ChResistUse.Length != cnt)
                 {
-                    var chResistUse = new bool[cnt];
+                    var chResistUse = new byte[cnt];
                     Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
                     ampParamOut.ChResistUse = chResistUse;
                 }
@@ -2578,7 +2670,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus)
+        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus)
         {
             var cnt = SdkLibConst.BrainBit2MaxChCount;
             if (ampParam.ChSignalMode.Length != cnt)
@@ -2589,7 +2681,7 @@ namespace NeuroSDK
             }
             if (ampParam.ChResistUse.Length != cnt)
             {
-                var chResistUse = new bool[cnt];
+                var chResistUse = new byte[cnt];
                 Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
                 ampParam.ChResistUse = chResistUse;
             }
@@ -2671,6 +2763,8 @@ namespace NeuroSDK
         private static extern byte writeSerialNumberSensor(IntPtr ptr, StringBuilder serialNumber, int szSerialNumber, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readBattPowerSensor(IntPtr ptr, out int battPowerOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus);
         
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -2678,6 +2772,9 @@ namespace NeuroSDK
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readGainSensor(IntPtr ptr, out SensorGain gainOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
+
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus);
@@ -2736,6 +2833,10 @@ namespace NeuroSDK
         private static extern byte addBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeBatteryCallback(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryVoltageCallback(IntPtr handle);
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -2746,8 +2847,6 @@ namespace NeuroSDK
         private static extern byte readHardwareFiltersSensor(IntPtr ptr, [In, Out] SensorFilter[] filtersOut, ref int szFiltersInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, int szFilters, out OpStatus outStatus);
-        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -2843,9 +2942,9 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeResistCallbackBrainBit2(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus);
+        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus);
+        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus);
 
 
         public IntPtr CreateScanner(SensorFamily[] filters, out OpStatus outStatus)
@@ -2898,6 +2997,10 @@ namespace NeuroSDK
             return disconnectSensor(ptr, out outStatus);
         }
 
+        public int GetChannelsCountSensor(IntPtr ptr)
+        {
+            return getChannelsCountSensor(ptr);
+        }
         public int GetFeaturesCountSensor(IntPtr ptr)
         {
             return getFeaturesCountSensor(ptr);
@@ -2986,6 +3089,10 @@ namespace NeuroSDK
         {
             return readBattPowerSensor(ptr, out battPowerOut, out outStatus);
         }
+        public byte ReadBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus)
+        {
+            return readBattVoltageSensor(ptr, out battVoltageOut, out outStatus);
+        }
         
         public byte ReadSamplingFrequencySensor(IntPtr ptr, out SensorSamplingFrequency samplingFrequencyOut, out OpStatus outStatus)
         {
@@ -2996,6 +3103,11 @@ namespace NeuroSDK
         {
             return readGainSensor(ptr, out gainOut, out outStatus);
         }
+        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
+        {
+            return writeGainSensor(ptr, gain, out outStatus);
+        }
+
         
         public byte ReadDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus)
         {
@@ -3055,10 +3167,6 @@ namespace NeuroSDK
         public byte WriteHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, out OpStatus outStatus)
         {
             return writeHardwareFiltersSensor(ptr, filters, filters.Length, out outStatus);
-        }
-        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
-        {
-            return writeGainSensor(ptr, gain, out outStatus);
         }
         public byte ReadExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus)
         {
@@ -3286,6 +3394,14 @@ namespace NeuroSDK
         {
             removeBatteryCallback(handle);
         }
+        public byte AddBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryVoltageCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryVoltageCallback(IntPtr handle)
+        {
+            removeBatteryVoltageCallback(handle);
+        }
         
         public byte AddConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
@@ -3325,7 +3441,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus)
+        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
             var res = readAmplifierParamBrainBit2(ptr, out ampParamOut, out outStatus);
             if (outStatus.Success)
@@ -3339,7 +3455,7 @@ namespace NeuroSDK
                 }
                 if (ampParamOut.ChResistUse.Length != cnt)
                 {
-                    var chResistUse = new bool[cnt];
+                    var chResistUse = new byte[cnt];
                     Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
                     ampParamOut.ChResistUse = chResistUse;
                 }
@@ -3352,7 +3468,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus)
+        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus)
         {
             var cnt = SdkLibConst.BrainBit2MaxChCount;
             if (ampParam.ChSignalMode.Length != cnt)
@@ -3363,7 +3479,7 @@ namespace NeuroSDK
             }
             if (ampParam.ChResistUse.Length != cnt)
             {
-                var chResistUse = new bool[cnt];
+                var chResistUse = new byte[cnt];
                 Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
                 ampParam.ChResistUse = chResistUse;
             }
@@ -3445,6 +3561,8 @@ namespace NeuroSDK
         private static extern byte writeSerialNumberSensor(IntPtr ptr, StringBuilder serialNumber, int szSerialNumber, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readBattPowerSensor(IntPtr ptr, out int battPowerOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus);
         
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -3452,6 +3570,9 @@ namespace NeuroSDK
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readGainSensor(IntPtr ptr, out SensorGain gainOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
+
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus);
@@ -3510,6 +3631,10 @@ namespace NeuroSDK
         private static extern byte addBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeBatteryCallback(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryVoltageCallback(IntPtr handle);
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -3520,8 +3645,6 @@ namespace NeuroSDK
         private static extern byte readHardwareFiltersSensor(IntPtr ptr, [In, Out] SensorFilter[] filtersOut, ref int szFiltersInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, int szFilters, out OpStatus outStatus);
-        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -3617,9 +3740,9 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeResistCallbackBrainBit2(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus);
+        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus);
+        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus);
 
 
         public IntPtr CreateScanner(SensorFamily[] filters, out OpStatus outStatus)
@@ -3672,6 +3795,10 @@ namespace NeuroSDK
             return disconnectSensor(ptr, out outStatus);
         }
 
+        public int GetChannelsCountSensor(IntPtr ptr)
+        {
+            return getChannelsCountSensor(ptr);
+        }
         public int GetFeaturesCountSensor(IntPtr ptr)
         {
             return getFeaturesCountSensor(ptr);
@@ -3760,6 +3887,10 @@ namespace NeuroSDK
         {
             return readBattPowerSensor(ptr, out battPowerOut, out outStatus);
         }
+        public byte ReadBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus)
+        {
+            return readBattVoltageSensor(ptr, out battVoltageOut, out outStatus);
+        }
         
         public byte ReadSamplingFrequencySensor(IntPtr ptr, out SensorSamplingFrequency samplingFrequencyOut, out OpStatus outStatus)
         {
@@ -3770,6 +3901,11 @@ namespace NeuroSDK
         {
             return readGainSensor(ptr, out gainOut, out outStatus);
         }
+        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
+        {
+            return writeGainSensor(ptr, gain, out outStatus);
+        }
+
         
         public byte ReadDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus)
         {
@@ -3829,10 +3965,6 @@ namespace NeuroSDK
         public byte WriteHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, out OpStatus outStatus)
         {
             return writeHardwareFiltersSensor(ptr, filters, filters.Length, out outStatus);
-        }
-        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
-        {
-            return writeGainSensor(ptr, gain, out outStatus);
         }
         public byte ReadExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus)
         {
@@ -4060,6 +4192,14 @@ namespace NeuroSDK
         {
             removeBatteryCallback(handle);
         }
+        public byte AddBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryVoltageCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryVoltageCallback(IntPtr handle)
+        {
+            removeBatteryVoltageCallback(handle);
+        }
         
         public byte AddConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
@@ -4099,7 +4239,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus)
+        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
             var res = readAmplifierParamBrainBit2(ptr, out ampParamOut, out outStatus);
             if (outStatus.Success)
@@ -4113,7 +4253,7 @@ namespace NeuroSDK
                 }
                 if (ampParamOut.ChResistUse.Length != cnt)
                 {
-                    var chResistUse = new bool[cnt];
+                    var chResistUse = new byte[cnt];
                     Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
                     ampParamOut.ChResistUse = chResistUse;
                 }
@@ -4126,7 +4266,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus)
+        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus)
         {
             var cnt = SdkLibConst.BrainBit2MaxChCount;
             if (ampParam.ChSignalMode.Length != cnt)
@@ -4137,7 +4277,7 @@ namespace NeuroSDK
             }
             if (ampParam.ChResistUse.Length != cnt)
             {
-                var chResistUse = new bool[cnt];
+                var chResistUse = new byte[cnt];
                 Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
                 ampParam.ChResistUse = chResistUse;
             }
@@ -4220,6 +4360,8 @@ namespace NeuroSDK
         private static extern byte writeSerialNumberSensor(IntPtr ptr, StringBuilder serialNumber, int szSerialNumber, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readBattPowerSensor(IntPtr ptr, out int battPowerOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus);
         
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -4227,6 +4369,9 @@ namespace NeuroSDK
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readGainSensor(IntPtr ptr, out SensorGain gainOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
+
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus);
@@ -4285,6 +4430,10 @@ namespace NeuroSDK
         private static extern byte addBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeBatteryCallback(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryVoltageCallback(IntPtr handle);
         
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -4295,8 +4444,6 @@ namespace NeuroSDK
         private static extern byte readHardwareFiltersSensor(IntPtr ptr, [In, Out] SensorFilter[] filtersOut, ref int szFiltersInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, int szFilters, out OpStatus outStatus);
-        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -4392,9 +4539,9 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeResistCallbackBrainBit2(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus);
+        private static extern byte  readAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus);
+        private static extern byte writeAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus);
 
 
         public IntPtr CreateScanner(SensorFamily[] filters, out OpStatus outStatus)
@@ -4447,6 +4594,10 @@ namespace NeuroSDK
             return disconnectSensor(ptr, out outStatus);
         }
 
+        public int GetChannelsCountSensor(IntPtr ptr)
+        {
+            return getChannelsCountSensor(ptr);
+        }
         public int GetFeaturesCountSensor(IntPtr ptr)
         {
             return getFeaturesCountSensor(ptr);
@@ -4535,6 +4686,10 @@ namespace NeuroSDK
         {
             return readBattPowerSensor(ptr, out battPowerOut, out outStatus);
         }
+        public byte ReadBattVoltageSensor(IntPtr ptr, out int battVoltageOut, out OpStatus outStatus)
+        {
+            return readBattVoltageSensor(ptr, out battVoltageOut, out outStatus);
+        }
         
         public byte ReadSamplingFrequencySensor(IntPtr ptr, out SensorSamplingFrequency samplingFrequencyOut, out OpStatus outStatus)
         {
@@ -4545,6 +4700,11 @@ namespace NeuroSDK
         {
             return readGainSensor(ptr, out gainOut, out outStatus);
         }
+        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
+        {
+            return writeGainSensor(ptr, gain, out outStatus);
+        }
+
         
         public byte ReadDataOffsetSensor(IntPtr ptr, out SensorDataOffset dataOffsetOut, out OpStatus outStatus)
         {
@@ -4604,10 +4764,6 @@ namespace NeuroSDK
         public byte WriteHardwareFiltersSensor(IntPtr ptr, SensorFilter[] filters, out OpStatus outStatus)
         {
             return writeHardwareFiltersSensor(ptr, filters, filters.Length, out outStatus);
-        }
-        public byte WriteGainSensor(IntPtr ptr, SensorGain gain, out OpStatus outStatus)
-        {
-            return writeGainSensor(ptr, gain, out outStatus);
         }
         public byte ReadExternalSwitchSensor(IntPtr ptr, out SensorExternalSwitchInput extSwInputOut, out OpStatus outStatus)
         {
@@ -4835,6 +4991,14 @@ namespace NeuroSDK
         {
             removeBatteryCallback(handle);
         }
+        public byte AddBatteryVoltageCallback(IntPtr ptr, BatteryVoltageCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryVoltageCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryVoltageCallback(IntPtr handle)
+        {
+            removeBatteryVoltageCallback(handle);
+        }
         
         public byte AddConnectionStateCallback(IntPtr ptr, ConnectionStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
@@ -4874,7 +5038,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParam ampParamOut, out OpStatus outStatus)
+        public byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
             var res = readAmplifierParamBrainBit2(ptr, out ampParamOut, out outStatus);
             if (outStatus.Success)
@@ -4888,7 +5052,7 @@ namespace NeuroSDK
                 }
                 if (ampParamOut.ChResistUse.Length != cnt)
                 {
-                    var chResistUse = new bool[cnt];
+                    var chResistUse = new byte[cnt];
                     Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
                     ampParamOut.ChResistUse = chResistUse;
                 }
@@ -4901,7 +5065,7 @@ namespace NeuroSDK
             }
             return res;
         }
-        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParam ampParam, out OpStatus outStatus)
+        public byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus)
         {
             var cnt = SdkLibConst.BrainBit2MaxChCount;
             if (ampParam.ChSignalMode.Length != cnt)
@@ -4912,7 +5076,7 @@ namespace NeuroSDK
             }
             if (ampParam.ChResistUse.Length != cnt)
             {
-                var chResistUse = new bool[cnt];
+                var chResistUse = new byte[cnt];
                 Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
                 ampParam.ChResistUse = chResistUse;
             }

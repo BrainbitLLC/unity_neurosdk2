@@ -12,26 +12,27 @@
 @end
 
 typedef NS_ENUM (UInt8, NTSensorFamily) {
-    NTSensorFamilyUnknown =0,
+    NTSensorFamilyUnknown = 0,
 
     NTSensorFamilyLECallibri = 1,
     NTSensorFamilyLEKolibri = 2,
 
 
-    NTSensorFamilyLEBrainBit =3,
+    NTSensorFamilyLEBrainBit = 3,
 
 
-    NTSensorFamilyLEBrainBitBlack =4,
+    NTSensorFamilyLEBrainBitBlack = 4,
 
 
  
-    NTSensorFamilyLESmartLeg =7,
-    NTSensorFamilyLENeurro =8,
-    NTSensorFamilyLEP300= 9,
-    NTSensorFamilyLEImpulse=10,
 
-    NTSensorFamilyLEEarBuds=12,
+    NTSensorFamilyLEEarBuds = 12,
 
+
+
+    NTSensorFamilyLEBrainBit2 = 18,
+    NTSensorFamilyLEBrainBitFlex = 19, 
+    NTSensorFamilyLEBrainBitPro = 20
 
 };
 
@@ -192,6 +193,8 @@ typedef NS_ENUM (UInt8, NTSensorFilter) {
     NTSensorFilterBSFBwhLvl2CutoffFreq55_65Hz,
     NTSensorFilterHPFBwhLvl2CutoffFreq10Hz,
     NTSensorFilterLPFBwhLvl2CutoffFreq400Hz,
+    NTSensorFilterHPFBwhLvl2CutoffFreq80Hz,
+    NTSensorFilterUnknown
 };
 
 typedef NS_ENUM (UInt8, NTSensorSamplingFrequency) {
@@ -393,13 +396,11 @@ typedef NS_ENUM (UInt8, NTCallibriElectrodeState) {
 
 @end
 
-
 struct Point3D {
     double X;
     double Y;
     double Z;
 };
-
 
 @interface NTMEMSData : NSObject
 @property (nonatomic, readonly) struct Point3D Accelerometer;
@@ -409,7 +410,40 @@ struct Point3D {
 
 @end
 
+typedef NS_ENUM (UInt8, NTGenCurrent) {
+    NTGenCurrentGenCurr0uA = 0,
+    NTGenCurrentGenCurr6nA = 1,
+    NTGenCurrentGenCurr12nA = 2,
+    NTGenCurrentGenCurr18nA = 3,
+    NTGenCurrentGenCurr24nA = 4,
+    NTGenCurrentGenCurr6uA = 5,
+    NTGenCurrentGenCurr24uA = 6,
+    NTGenCurrentGenUnsupported = 0xFF
+};
 
+typedef NS_ENUM (UInt8, NTBrainBit2ChannelMode) {
+    NTBrainBit2ChannelModeShort = 0,
+    NTBrainBit2ChannelModeNormal = 1
+};
+
+@interface NTBrainBit2AmplifierParam : NSObject
+@property (nonatomic) NSMutableArray<NSNumber*>* _Nonnull ChSignalMode;
+@property (nonatomic) NSMutableArray<NSNumber*>* _Nonnull ChResistUse;
+@property (nonatomic) NSMutableArray<NSNumber*>* _Nonnull ChGain;
+@property (nonatomic) enum NTGenCurrent Current;
+
+- (nonnull instancetype)init;
+
+@end
+
+@interface NTResistRefChannelsData : NSObject
+@property (nonatomic) UInt32 PackNum;
+@property (nonatomic) NSMutableArray<NSNumber*>* _Nonnull Samples;
+@property (nonatomic) NSMutableArray<NSNumber*>* _Nonnull Referents;
+
+- (nonnull instancetype)init NS_UNAVAILABLE;
+
+@end
 
 typedef NS_ENUM (UInt8, NTIrAmplitude) {
     NTIrAmplitudeIrAmp0 = 0,
@@ -459,16 +493,6 @@ typedef NS_ENUM (UInt8, NTRedAmplitude) {
 
 
 
-typedef NS_ENUM (UInt8, NTGenCurrent) {
-    NTGenCurrentGenCurr0uA = 0,
-    NTGenCurrentGenCurr6nA = 1,
-    NTGenCurrentGenCurr12nA = 2,
-    NTGenCurrentGenCurr18nA = 3,
-    NTGenCurrentGenCurr24nA = 4,
-    NTGenCurrentGenCurr6uA = 5,
-    NTGenCurrentGenCurr24uA = 6,
-    NTGenCurrentGenUnsupported = 0xFF
-};
 
 
 
@@ -512,13 +536,69 @@ typedef NS_ENUM (UInt8, NTCallibriSignalType)
     NTCallibriSignalTypeEDA = 3,// GSR
     NTCallibriSignalTypeStrainGaugeBreathing = 4,
     NTCallibriSignalTypeImpedanceBreathing = 5,
-    NTCallibriSignalTypeUnknown = 6
+    NTCallibriSignalTypeTenzoBreathing = 6,
+    NTCallibriSignalTypeUnknown = 7
 };
 
 
 
 
 
+@interface NTSignalChannelsData : NSObject
+@property (nonatomic) UInt32 PackNum;
+@property (nonatomic) UInt8 Marker;
+@property (nonatomic) NSArray<NSNumber*>* _Nonnull Samples;
+@end
+
+
+typedef NS_ENUM (UInt8, NTEEGChannelType)
+{
+    NTEEGChannelTypeSingleA1,
+    NTEEGChannelTypeSingleA2,
+    NTEEGChannelTypeDifferential,
+	NTEEGChannelTypeRef
+};
+
+typedef NS_ENUM (UInt8, NTEEGChannelId)
+{
+    NTEEGChannelIdUnknown,
+    NTEEGChannelIdO1,
+    NTEEGChannelIdP3,
+    NTEEGChannelIdC3,
+    NTEEGChannelIdF3,
+    NTEEGChannelIdFp1,
+    NTEEGChannelIdT5,
+    NTEEGChannelIdT3,
+    NTEEGChannelIdF7,
+
+    NTEEGChannelIdF8,
+    NTEEGChannelIdT4,
+    NTEEGChannelIdT6,
+    NTEEGChannelIdFp2,
+    NTEEGChannelIdF4,
+    NTEEGChannelIdC4,
+    NTEEGChannelIdP4,
+    NTEEGChannelIdO2,
+
+    NTEEGChannelIdD1,
+    NTEEGChannelIdD2,
+    NTEEGChannelIdOZ,
+    NTEEGChannelIdPZ,
+    NTEEGChannelIdCZ,
+    NTEEGChannelIdFZ,
+    NTEEGChannelIdFpZ,
+    NTEEGChannelIdD3
+};
+
+@interface NTEEGChannelInfo : NSObject
+@property (nonatomic, readonly) NTEEGChannelId Id;
+@property (nonatomic, readonly) NTEEGChannelType ChType;
+@property (nonatomic, readonly) NSString*_Nonnull Name;
+@property (nonatomic, readonly) UInt8  Num;
+
+- (nonnull instancetype)init NS_UNAVAILABLE;
+
+@end
 
 
 #endif /* NTTypes_h */
