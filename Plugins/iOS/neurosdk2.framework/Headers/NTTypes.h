@@ -208,7 +208,14 @@ typedef NS_ENUM (UInt8, NTSensorSamplingFrequency) {
     NTSensorSamplingFrequencyHz2000,
     NTSensorSamplingFrequencyHz4000,
     NTSensorSamplingFrequencyHz8000,
-    NTSensorSamplingFrequencyUnsupported
+    NTSensorSamplingFrequencyHz10000,
+	NTSensorSamplingFrequencyHz12000,
+	NTSensorSamplingFrequencyHz16000,
+	NTSensorSamplingFrequencyHz24000,
+	NTSensorSamplingFrequencyHz32000,
+	NTSensorSamplingFrequencyHz48000,
+	NTSensorSamplingFrequencyHz64000,
+    NTSensorSamplingFrequencyUnsupported = 0xFF
 };
 
 typedef NS_ENUM (UInt8, NTSensorGain){

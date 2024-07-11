@@ -232,8 +232,8 @@ namespace NeuroSDK
                     ChSignalMode = new BrainBit2ChannelMode[value.ChSignalMode.Length],
                     ChResistUse = Array.ConvertAll(value.ChResistUse, item => item ? (byte)1 : (byte)0)
                 };
-                setter.ChSignalMode.CopyTo(value.ChSignalMode, 0);
-                setter.ChGain.CopyTo(value.ChGain, 0);
+                value.ChSignalMode.CopyTo(setter.ChSignalMode, 0);
+                value.ChGain.CopyTo(setter.ChGain, 0);
                 byte error = SDKApiFactory.Inst.WriteAmplifierParamBrainBit2(_sensorPtr, setter, out opSt);
                 SDKApiFactory.ThrowIfError(opSt, error);
             }

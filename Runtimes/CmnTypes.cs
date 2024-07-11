@@ -232,7 +232,7 @@ namespace NeuroSDK
     /// <summary>
     /// Sensor sampling frequency
     /// </summary>
-    public enum SensorSamplingFrequency : sbyte
+    public enum SensorSamplingFrequency : byte
     {
         FrequencyHz10,
         FrequencyHz20,
@@ -251,7 +251,7 @@ namespace NeuroSDK
 	    FrequencyHz32000,
 	    FrequencyHz48000,
 	    FrequencyHz64000,
-        FrequencyUnsupported
+        FrequencyUnsupported = 0xFF
     }
     /// <summary>
     /// Sensor gain
