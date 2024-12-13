@@ -29,6 +29,8 @@ typedef NS_ENUM (UInt8, NTSensorFamily) {
     NTSensorFamilyLEEarBuds = 12,
 
 
+    NTSensorFamilyLENeuroEEG = 14,
+
 
     NTSensorFamilyLEBrainBit2 = 18,
     NTSensorFamilyLEBrainBitFlex = 19, 
@@ -549,6 +551,91 @@ typedef NS_ENUM (UInt8, NTCallibriSignalType)
 
 
 
+
+typedef NS_ENUM(UInt8, NTEEGChannelMode)
+{
+    NTEEGChannelModeOff,
+    NTEEGChannelModeShorted,
+    NTEEGChannelModeSignalResist,
+    NTEEGChannelModeSignal,
+    NTEEGChannelModeTest
+};
+
+typedef NS_ENUM (UInt8, NTSensorFSStatus)
+{
+    NTSensorFSStatusOK,
+    NTSensorFSStatusNoInit,
+    NTSensorFSStatusNoDisk,
+    NTSensorFSStatusProtect
+};
+
+typedef NS_ENUM (UInt8, NTSensorFSIOStatus)
+{
+    NTSensorFSIOStatusNoError,
+    NTSensorFSIOStatusIOError,
+    NTSensorFSIOStatusTimeout
+};
+
+typedef NS_ENUM (UInt8, NTSensorFSStreamStatus)
+{
+    NTSensorFSStreamStatusClosed,
+    NTSensorFSStreamStatusWrite,
+    NTSensorFSStreamStatusRead
+};
+
+@interface NTSensorDiskInfo : NSObject
+@property (nonatomic, readonly) UInt64 TotalSize;
+@property (nonatomic, readonly) UInt64 FreeSize;
+@end
+
+typedef NS_ENUM (UInt8, NTEEGRefMode)
+{
+    NTEEGRefModeHeadTop = 1,
+    NTEEGRefModeA1A2
+};
+
+@interface NTNeuroEEGAmplifierParam : NSObject
+@property (nonatomic) BOOL ReferentResistMesureAllow;
+@property (nonatomic) enum NTSensorSamplingFrequency Frequency;
+@property (nonatomic) enum NTEEGRefMode ReferentMode;
+@property (nonatomic) NSMutableArray<NSNumber*>* _Nonnull ChannelMode;
+@property (nonatomic) NSMutableArray<NSNumber*>* _Nonnull ChannelGain;
+- (nonnull instancetype)init;
+@end
+
+@interface NTNeuroEEGFSStatus : NSObject
+@property (nonatomic) NTSensorFSStatus Status;
+@property (nonatomic) NTSensorFSIOStatus IOStatus;
+@property (nonatomic) NTSensorFSStreamStatus StreamStatus;
+@property (nonatomic) BOOL AutosaveSignal;
+@end
+
+
+@interface NTResistChannelsData : NSObject
+@property (nonatomic) UInt32 PackNum;
+@property (nonatomic) NSNumber*_Nonnull A1;
+@property (nonatomic) NSNumber*_Nonnull A2;
+@property (nonatomic) NSNumber*_Nonnull Bias;
+@property (nonatomic) NSArray<NSNumber*>* _Nonnull Values;
+@end
+
+@interface NTSensorFileData : NSObject
+@property (nonatomic, readonly) UInt32 OffsetStart;
+@property (nonatomic, readonly) UInt32 DataAmount;
+@property (nonatomic, readonly) NSData*_Nonnull Data;
+@end
+
+@interface NTSensorFileInfo : NSObject
+@property (nonatomic, readonly) NSString*_Nonnull FileName;//char FileName[FILE_NAME_MAX_LEN];
+@property (nonatomic, readonly) UInt32 FileSize;
+@property (nonatomic, readonly) UInt16 ModifiedYear;
+@property (nonatomic, readonly) UInt8 ModifiedMonth;
+@property (nonatomic, readonly) UInt8 ModifiedDayOfMonth;
+@property (nonatomic, readonly) UInt8 ModifiedHour;
+@property (nonatomic, readonly) UInt8 ModifiedMin;
+@property (nonatomic, readonly) UInt8 ModifiedSec;
+@property (nonatomic, readonly) UInt8 Attribute;
+@end
 
 
 @interface NTSignalChannelsData : NSObject

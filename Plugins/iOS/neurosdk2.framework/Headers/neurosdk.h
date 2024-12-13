@@ -14,6 +14,9 @@
 
 
 
+#import "NTNeuroEEG.h"
+#import "NTNeuroEEGSignalProcessing.h"
+
 
 #import "NTBrainBit2.h"
 

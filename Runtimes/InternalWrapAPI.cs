@@ -98,6 +98,22 @@ namespace NeuroSDK
     }
 
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct NeuroEEGAmplifierParamNative
+    {
+        [MarshalAs(UnmanagedType.I1)]
+        public byte ReferentResistMesureAllow;
+        public SensorSamplingFrequency Frequency;
+        public EEGRefMode ReferentMode;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.NeuroEEGMaxChCount)]
+        public EEGChannelMode[] ChannelMode;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.NeuroEEGMaxChCount)]
+        public SensorGain[] ChannelGain;
+        [MarshalAs(UnmanagedType.I1)]
+        public byte RespirationOn;
+    }
+
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     internal delegate void SensorsCallbackScanner(IntPtr ptr, IntPtr sensors, IntPtr szSensors, IntPtr userData);
 
@@ -140,6 +156,19 @@ namespace NeuroSDK
 
 
 
+ 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void SignalCallbackNeuroEEGSensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] SignalChannelsDataNative[] dataArray, [In] int dataSize, IntPtr userData);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void ResistCallbackNeuroEEGSensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] ResistChannelsDataNative[] dataArray, [In] int dataSize, IntPtr userData);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void SignalResistCallbackNeuroEEGSensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] SignalChannelsDataNative[] signalData, [In] int szSignalData, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] ResistChannelsDataNative[] resistData, [In] int szResistData, IntPtr userData);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void SignalRawCallbackNeuroEEGSensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] byte[] dataArray, [In] int dataSize, IntPtr userData);
+
+ 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void FileStreamReadCallbackNeuroEEGSensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] SensorFileDataNative[] dataArray, [In] int dataSize, IntPtr userData);
 
 
 
@@ -149,6 +178,13 @@ namespace NeuroSDK
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void ResistCallbackBrainBit2Sensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] ResistRefChannelsDataNative[] dataArray, [In] int dataSize, IntPtr userData);
 
+ 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void StimulModeCallbackSensor(IntPtr ptr, SensorStimulMode mode, IntPtr userData); 
+
+ 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void StimulSyncStateCallbackSensor(IntPtr ptr, SensorStimulSyncState state, IntPtr userData);
 
 
     internal interface ISDKApi
@@ -208,7 +244,7 @@ namespace NeuroSDK
         
         byte ReadVersionSensor(IntPtr ptr, out SensorVersion versionOut, out OpStatus outStatus);
         
-    	byte ReadSamplingFrequencyResistSensor(IntPtr ptr, out SensorSamplingFrequency samplingFrequencyOut, out OpStatus outStatus);
+	byte ReadSamplingFrequencyResistSensor(IntPtr ptr, out SensorSamplingFrequency samplingFrequencyOut, out OpStatus outStatus);
 	    byte ReadSamplingFrequencyFPGSensor(IntPtr ptr, out SensorSamplingFrequency samplingFrequencyOut, out OpStatus outStatus);
 	    byte ReadIrAmplitudeFPGSensor(IntPtr ptr, out IrAmplitude amplitudeOut, out OpStatus outStatus);
 	    byte WriteIrAmplitudeFPGSensor(IntPtr ptr, IrAmplitude amplitude, out OpStatus outStatus);
@@ -218,10 +254,25 @@ namespace NeuroSDK
 
 	    byte AddAmpModeCallback(IntPtr ptr, AmpModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         void RemoveAmpModeCallback(IntPtr handle);
-    	byte PingNeuroSmart(IntPtr ptr, byte marker, out OpStatus outStatus);
+	byte PingNeuroSmart(IntPtr ptr, byte marker, out OpStatus outStatus);
     	byte AddFPGDataCallback(IntPtr ptr, FPGDataCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         void RemoveFPGDataCallback(IntPtr handle);
 	    byte WriteSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
+	    byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+
+        byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus);
+        byte WriteStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, out OpStatus outStatus);
+
+	    byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveStimModeCallback(IntPtr handle);
+	    byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
+
+        byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+        byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+	    byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemovePhotoStimSyncStateCallback(IntPtr handle);
+        byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus);
 
 
         byte AddBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -282,6 +333,45 @@ namespace NeuroSDK
 
 
 
+        // -----===== NeuroEEG / CompactNeuro3 =====-----
+        byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
+        byte WriteSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus);
+        byte ReadAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus);
+	    byte WriteAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus);        
+
+        byte AddSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveSignalCallbackNeuroEEG(IntPtr handle);
+        byte AddResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveResistCallbackNeuroEEG(IntPtr handle);
+        byte AddSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveSignalResistCallbackNeuroEEG(IntPtr handle);
+        byte AddSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveSignalRawCallbackNeuroEEG(IntPtr handle);
+
+        uint CalcCRC32(byte[] data);
+
+        // -----===== NeuroEEG =====-----
+        byte ReadSupportedChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus);
+        byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
+        byte ReadFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
+        byte ReadFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus);
+        byte ReadFileInfoAllNeuroEEG(IntPtr ptr, out SensorFileInfo[] filesInfoOut, uint maxFiles, out OpStatus outStatus);
+        byte WriteFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint offsetStart, out OpStatus outStatus);
+        byte ReadFileNeuroEEG(IntPtr ptr, string fileName, out byte[] data, uint szData, uint offsetStart, out OpStatus outStatus);
+        byte DeleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        byte DeleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus);
+        byte ReadFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus);
+        byte FileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        byte FileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+        IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr);
+	    byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+
+        byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveFileStreamReadCallbackNeuroEEG(IntPtr handle);
+
+        byte CreateSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus);
+        void RemoveSignalProcessParamNeuroEEG(IntPtr param);
+        byte ParseRawSignalNeuroEEG(byte[] data, out uint szDataReadyOut, IntPtr processParam, out SignalChannelsData[] signalOut, out ResistChannelsData[] resistOut, out OpStatus outStatus);
 
 
 
@@ -297,6 +387,7 @@ namespace NeuroSDK
 
 	    byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus);
 	    byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus);
+
 
     }
 #if !__IOS__
@@ -432,6 +523,35 @@ namespace NeuroSDK
         private static extern void removeFPGDataCallback(IntPtr handle);
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeStimModeCallback(IntPtr handle);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -535,6 +655,75 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalRawCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void calcCRC32(byte[] data, uint szData, out uint crc32Out);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoAllNeuroEEG(IntPtr ptr, [In, Out] SensorFileInfo[] filesInfoOut, ref uint szFilesInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint szData, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readFileNeuroEEG(IntPtr ptr, string fileName, [In, Out] byte[] data, ref uint szDataInOut, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeFileStreamReadCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte createSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalProcessParamNeuroEEG(IntPtr param);
+        // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -989,6 +1178,71 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
+        {
+            return readStimMode(ptr, out modeOut, out outStatus);
+        }
+
+        public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
+        {
+            int sz = getMaxStimulPhasesCountSensor(ptr);
+            StimulPhase[] valArr = new StimulPhase[sz];
+            var res = readStimPrograms(ptr, valArr, ref sz, out outStatus);
+            stimProgramsOut = new StimulPhase[outStatus.Success ? sz : 0];
+            if (outStatus.Success)
+            {
+                Array.Copy(valArr, 0, stimProgramsOut, 0, sz);
+            }
+            return res;
+        }
+        public byte WriteStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, out OpStatus outStatus)
+        {
+            return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
+        }
+
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
+        }
+        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
+        {
+            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+        }
+
+        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        {
+            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+        }
+        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        {
+            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+        }
+
+        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        {
+            removePhotoStimSyncStateCallback(handle);
+        }
+        public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedEEGChannels(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
 
 
         public byte AddBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -1016,7 +1270,201 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-                public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        {
+            return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
+        }
+        public byte WriteSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus)
+        {
+            return writeSurveyIdNeuroEEG(ptr, surveyId, out outStatus);
+        }
+
+        public byte ReadAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamNeuroEEG(ptr, out ampParamOut, out outStatus);
+        }
+	    public byte WriteAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamNeuroEEG(ptr, ampParam, out outStatus);
+        }
+
+        public byte AddSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalCallbackNeuroEEG(handle);
+        }
+        public byte AddResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalRawCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalRawCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalRawCallbackNeuroEEG(handle);
+        }
+
+        public uint CalcCRC32(byte[] data)
+        {
+            uint val;
+            calcCRC32(data, (uint)data.Length, out val);
+            return val;
+        }
+        public byte ReadSupportedChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
+        public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
+        {
+            return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
+        }
+        public byte ReadFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus)
+        {
+            return readFileSystemDiskInfoNeuroEEG(ptr, out diskInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus)
+        {
+            return readFileInfoNeuroEEG(ptr, fileName, out fileInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoAllNeuroEEG(IntPtr ptr, out SensorFileInfo[] filesInfoOut, uint maxFiles, out OpStatus outStatus)
+        {
+            var tmpFiles = new SensorFileInfo[maxFiles];
+            var res = readFileInfoAllNeuroEEG(ptr, tmpFiles, ref maxFiles, out outStatus);
+            filesInfoOut = outStatus.Success ? new SensorFileInfo[maxFiles] : new SensorFileInfo[0];
+            if(outStatus.Success)
+                Array.Copy(tmpFiles, filesInfoOut, maxFiles);
+            return res;
+        }
+        public byte WriteFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint offsetStart, out OpStatus outStatus)
+        {
+            return writeFileNeuroEEG(ptr, fileName, data, (uint)(data.Length), offsetStart, out outStatus);
+        }
+        public byte ReadFileNeuroEEG(IntPtr ptr, string fileName, out byte[] data, uint szData, uint offsetStart, out OpStatus outStatus)
+        {
+            byte[] tmpData = new byte[szData];
+            var res = readFileNeuroEEG(ptr, fileName, tmpData, ref szData, offsetStart, out outStatus);
+            data = outStatus.Success ? new byte[szData] : new byte[0];
+            if(outStatus.Success)
+                Array.Copy(tmpData, data, szData);
+            return res;
+        }
+        public byte DeleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return deleteFileNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte DeleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus)
+        {
+            return deleteAllFilesNeuroEEG(ptr, fileExt, out outStatus);
+        }
+        public byte ReadFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus)
+        {
+            return readFileCRC32NeuroEEG(ptr, fileName, totalSize, offsetStart, out crc32Out, out outStatus);
+        }
+        public byte FileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return fileStreamAutosaveNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte FileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus)
+        {
+            return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
+        }
+        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+        {
+            return readPhotoStimNeuroEEG(ptr);
+        }
+	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+        {
+            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+        }
+
+        public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addFileStreamReadCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveFileStreamReadCallbackNeuroEEG(IntPtr handle)
+        {
+            removeFileStreamReadCallbackNeuroEEG(handle);
+        }
+
+        public byte CreateSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus)
+        {
+            return createSignalProcessParamNeuroEEG(ampParam, out paramOut, out outStatus);
+        }
+        public void RemoveSignalProcessParamNeuroEEG(IntPtr param)
+        {
+            removeSignalProcessParamNeuroEEG(param);
+        }
+        public byte ParseRawSignalNeuroEEG(byte[] data, out uint szDataReadyOut, IntPtr processParam, out SignalChannelsData[] signalOut, out ResistChannelsData[] resistOut, out OpStatus outStatus)
+        {
+            var maxSamples = Math.Max(data.Length / 158 * 36, 1000);
+            var tmpSignal = new SignalChannelsDataNative[maxSamples];
+            var tmpResist = new ResistChannelsDataNative[maxSamples];
+            uint szReady = (uint)data.Length;
+            uint szSignal = (uint)tmpSignal.Length;
+            uint szResist = (uint)tmpResist.Length;
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                tmpSignal[i].SzSamples = SdkLibConst.NeuroEEGMaxChCount;
+                tmpSignal[i].Samples = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+
+                tmpResist[i].SzValues = SdkLibConst.NeuroEEGMaxChCount;
+                tmpResist[i].Values = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+            }
+            var res = parseRawSignalNeuroEEG(data, ref szReady, processParam, tmpSignal, ref szSignal, tmpResist, ref szResist, out outStatus);
+
+            signalOut = new SignalChannelsData[outStatus.Success ? szSignal : 0];
+            resistOut = new ResistChannelsData[outStatus.Success ? szResist : 0];
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                if (szSignal != 0)
+                {
+                    --szSignal;
+                    signalOut[i].Samples = new NativeArrayMarshaler<double>().MarshalArray(tmpSignal[i].Samples, (IntPtr)tmpSignal[i].SzSamples);
+                    signalOut[i].PackNum = tmpSignal[i].PackNum;
+                    signalOut[i].Marker = tmpSignal[i].Marker;
+                }
+                if (szResist != 0)
+                {
+                    --szResist;
+                    resistOut[i].Values = new NativeArrayMarshaler<double>().MarshalArray(tmpResist[i].Values, (IntPtr)tmpResist[i].SzValues);
+                    resistOut[i].PackNum = tmpResist[i].PackNum;
+                    resistOut[i].A1 = tmpResist[i].A1;
+                    resistOut[i].A2 = tmpResist[i].A2;
+                    resistOut[i].Bias = tmpResist[i].Bias;
+                }
+                Marshal.FreeHGlobal(tmpSignal[i].Samples);
+                Marshal.FreeHGlobal(tmpResist[i].Values);
+            }
+            szDataReadyOut = szReady;
+            return res;
+        }
+        public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
             return addSignalCallbackBrainBit2(ptr, callback, out handleOut, userData, out outStatus);
         }
@@ -1230,6 +1678,35 @@ namespace NeuroSDK
         private static extern void removeFPGDataCallback(IntPtr handle);
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeStimModeCallback(IntPtr handle);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -1333,6 +1810,75 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalRawCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void calcCRC32(byte[] data, uint szData, out uint crc32Out);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoAllNeuroEEG(IntPtr ptr, [In, Out] SensorFileInfo[] filesInfoOut, ref uint szFilesInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint szData, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readFileNeuroEEG(IntPtr ptr, string fileName, [In, Out] byte[] data, ref uint szDataInOut, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeFileStreamReadCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte createSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalProcessParamNeuroEEG(IntPtr param);
+        // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -1787,6 +2333,71 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
+        {
+            return readStimMode(ptr, out modeOut, out outStatus);
+        }
+
+        public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
+        {
+            int sz = getMaxStimulPhasesCountSensor(ptr);
+            StimulPhase[] valArr = new StimulPhase[sz];
+            var res = readStimPrograms(ptr, valArr, ref sz, out outStatus);
+            stimProgramsOut = new StimulPhase[outStatus.Success ? sz : 0];
+            if (outStatus.Success)
+            {
+                Array.Copy(valArr, 0, stimProgramsOut, 0, sz);
+            }
+            return res;
+        }
+        public byte WriteStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, out OpStatus outStatus)
+        {
+            return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
+        }
+
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
+        }
+        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
+        {
+            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+        }
+
+        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        {
+            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+        }
+        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        {
+            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+        }
+
+        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        {
+            removePhotoStimSyncStateCallback(handle);
+        }
+        public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedEEGChannels(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
 
 
         public byte AddBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -1814,7 +2425,201 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-                public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        {
+            return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
+        }
+        public byte WriteSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus)
+        {
+            return writeSurveyIdNeuroEEG(ptr, surveyId, out outStatus);
+        }
+
+        public byte ReadAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamNeuroEEG(ptr, out ampParamOut, out outStatus);
+        }
+	    public byte WriteAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamNeuroEEG(ptr, ampParam, out outStatus);
+        }
+
+        public byte AddSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalCallbackNeuroEEG(handle);
+        }
+        public byte AddResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalRawCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalRawCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalRawCallbackNeuroEEG(handle);
+        }
+
+        public uint CalcCRC32(byte[] data)
+        {
+            uint val;
+            calcCRC32(data, (uint)data.Length, out val);
+            return val;
+        }
+        public byte ReadSupportedChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
+        public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
+        {
+            return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
+        }
+        public byte ReadFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus)
+        {
+            return readFileSystemDiskInfoNeuroEEG(ptr, out diskInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus)
+        {
+            return readFileInfoNeuroEEG(ptr, fileName, out fileInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoAllNeuroEEG(IntPtr ptr, out SensorFileInfo[] filesInfoOut, uint maxFiles, out OpStatus outStatus)
+        {
+            var tmpFiles = new SensorFileInfo[maxFiles];
+            var res = readFileInfoAllNeuroEEG(ptr, tmpFiles, ref maxFiles, out outStatus);
+            filesInfoOut = outStatus.Success ? new SensorFileInfo[maxFiles] : new SensorFileInfo[0];
+            if(outStatus.Success)
+                Array.Copy(tmpFiles, filesInfoOut, maxFiles);
+            return res;
+        }
+        public byte WriteFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint offsetStart, out OpStatus outStatus)
+        {
+            return writeFileNeuroEEG(ptr, fileName, data, (uint)(data.Length), offsetStart, out outStatus);
+        }
+        public byte ReadFileNeuroEEG(IntPtr ptr, string fileName, out byte[] data, uint szData, uint offsetStart, out OpStatus outStatus)
+        {
+            byte[] tmpData = new byte[szData];
+            var res = readFileNeuroEEG(ptr, fileName, tmpData, ref szData, offsetStart, out outStatus);
+            data = outStatus.Success ? new byte[szData] : new byte[0];
+            if(outStatus.Success)
+                Array.Copy(tmpData, data, szData);
+            return res;
+        }
+        public byte DeleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return deleteFileNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte DeleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus)
+        {
+            return deleteAllFilesNeuroEEG(ptr, fileExt, out outStatus);
+        }
+        public byte ReadFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus)
+        {
+            return readFileCRC32NeuroEEG(ptr, fileName, totalSize, offsetStart, out crc32Out, out outStatus);
+        }
+        public byte FileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return fileStreamAutosaveNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte FileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus)
+        {
+            return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
+        }
+        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+        {
+            return readPhotoStimNeuroEEG(ptr);
+        }
+	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+        {
+            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+        }
+
+        public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addFileStreamReadCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveFileStreamReadCallbackNeuroEEG(IntPtr handle)
+        {
+            removeFileStreamReadCallbackNeuroEEG(handle);
+        }
+
+        public byte CreateSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus)
+        {
+            return createSignalProcessParamNeuroEEG(ampParam, out paramOut, out outStatus);
+        }
+        public void RemoveSignalProcessParamNeuroEEG(IntPtr param)
+        {
+            removeSignalProcessParamNeuroEEG(param);
+        }
+        public byte ParseRawSignalNeuroEEG(byte[] data, out uint szDataReadyOut, IntPtr processParam, out SignalChannelsData[] signalOut, out ResistChannelsData[] resistOut, out OpStatus outStatus)
+        {
+            var maxSamples = Math.Max(data.Length / 158 * 36, 1000);
+            var tmpSignal = new SignalChannelsDataNative[maxSamples];
+            var tmpResist = new ResistChannelsDataNative[maxSamples];
+            uint szReady = (uint)data.Length;
+            uint szSignal = (uint)tmpSignal.Length;
+            uint szResist = (uint)tmpResist.Length;
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                tmpSignal[i].SzSamples = SdkLibConst.NeuroEEGMaxChCount;
+                tmpSignal[i].Samples = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+
+                tmpResist[i].SzValues = SdkLibConst.NeuroEEGMaxChCount;
+                tmpResist[i].Values = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+            }
+            var res = parseRawSignalNeuroEEG(data, ref szReady, processParam, tmpSignal, ref szSignal, tmpResist, ref szResist, out outStatus);
+
+            signalOut = new SignalChannelsData[outStatus.Success ? szSignal : 0];
+            resistOut = new ResistChannelsData[outStatus.Success ? szResist : 0];
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                if (szSignal != 0)
+                {
+                    --szSignal;
+                    signalOut[i].Samples = new NativeArrayMarshaler<double>().MarshalArray(tmpSignal[i].Samples, (IntPtr)tmpSignal[i].SzSamples);
+                    signalOut[i].PackNum = tmpSignal[i].PackNum;
+                    signalOut[i].Marker = tmpSignal[i].Marker;
+                }
+                if (szResist != 0)
+                {
+                    --szResist;
+                    resistOut[i].Values = new NativeArrayMarshaler<double>().MarshalArray(tmpResist[i].Values, (IntPtr)tmpResist[i].SzValues);
+                    resistOut[i].PackNum = tmpResist[i].PackNum;
+                    resistOut[i].A1 = tmpResist[i].A1;
+                    resistOut[i].A2 = tmpResist[i].A2;
+                    resistOut[i].Bias = tmpResist[i].Bias;
+                }
+                Marshal.FreeHGlobal(tmpSignal[i].Samples);
+                Marshal.FreeHGlobal(tmpResist[i].Values);
+            }
+            szDataReadyOut = szReady;
+            return res;
+        }
+        public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
             return addSignalCallbackBrainBit2(ptr, callback, out handleOut, userData, out outStatus);
         }
@@ -2029,6 +2834,35 @@ namespace NeuroSDK
         private static extern void removeFPGDataCallback(IntPtr handle);
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeStimModeCallback(IntPtr handle);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -2132,6 +2966,75 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalRawCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void calcCRC32(byte[] data, uint szData, out uint crc32Out);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoAllNeuroEEG(IntPtr ptr, [In, Out] SensorFileInfo[] filesInfoOut, ref uint szFilesInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint szData, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readFileNeuroEEG(IntPtr ptr, string fileName, [In, Out] byte[] data, ref uint szDataInOut, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeFileStreamReadCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte createSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalProcessParamNeuroEEG(IntPtr param);
+        // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -2586,6 +3489,71 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
+        {
+            return readStimMode(ptr, out modeOut, out outStatus);
+        }
+
+        public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
+        {
+            int sz = getMaxStimulPhasesCountSensor(ptr);
+            StimulPhase[] valArr = new StimulPhase[sz];
+            var res = readStimPrograms(ptr, valArr, ref sz, out outStatus);
+            stimProgramsOut = new StimulPhase[outStatus.Success ? sz : 0];
+            if (outStatus.Success)
+            {
+                Array.Copy(valArr, 0, stimProgramsOut, 0, sz);
+            }
+            return res;
+        }
+        public byte WriteStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, out OpStatus outStatus)
+        {
+            return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
+        }
+
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
+        }
+        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
+        {
+            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+        }
+
+        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        {
+            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+        }
+        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        {
+            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+        }
+
+        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        {
+            removePhotoStimSyncStateCallback(handle);
+        }
+        public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedEEGChannels(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
 
 
         public byte AddBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -2613,7 +3581,201 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-                public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        {
+            return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
+        }
+        public byte WriteSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus)
+        {
+            return writeSurveyIdNeuroEEG(ptr, surveyId, out outStatus);
+        }
+
+        public byte ReadAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamNeuroEEG(ptr, out ampParamOut, out outStatus);
+        }
+	    public byte WriteAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamNeuroEEG(ptr, ampParam, out outStatus);
+        }
+
+        public byte AddSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalCallbackNeuroEEG(handle);
+        }
+        public byte AddResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalRawCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalRawCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalRawCallbackNeuroEEG(handle);
+        }
+
+        public uint CalcCRC32(byte[] data)
+        {
+            uint val;
+            calcCRC32(data, (uint)data.Length, out val);
+            return val;
+        }
+        public byte ReadSupportedChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
+        public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
+        {
+            return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
+        }
+        public byte ReadFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus)
+        {
+            return readFileSystemDiskInfoNeuroEEG(ptr, out diskInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus)
+        {
+            return readFileInfoNeuroEEG(ptr, fileName, out fileInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoAllNeuroEEG(IntPtr ptr, out SensorFileInfo[] filesInfoOut, uint maxFiles, out OpStatus outStatus)
+        {
+            var tmpFiles = new SensorFileInfo[maxFiles];
+            var res = readFileInfoAllNeuroEEG(ptr, tmpFiles, ref maxFiles, out outStatus);
+            filesInfoOut = outStatus.Success ? new SensorFileInfo[maxFiles] : new SensorFileInfo[0];
+            if(outStatus.Success)
+                Array.Copy(tmpFiles, filesInfoOut, maxFiles);
+            return res;
+        }
+        public byte WriteFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint offsetStart, out OpStatus outStatus)
+        {
+            return writeFileNeuroEEG(ptr, fileName, data, (uint)(data.Length), offsetStart, out outStatus);
+        }
+        public byte ReadFileNeuroEEG(IntPtr ptr, string fileName, out byte[] data, uint szData, uint offsetStart, out OpStatus outStatus)
+        {
+            byte[] tmpData = new byte[szData];
+            var res = readFileNeuroEEG(ptr, fileName, tmpData, ref szData, offsetStart, out outStatus);
+            data = outStatus.Success ? new byte[szData] : new byte[0];
+            if(outStatus.Success)
+                Array.Copy(tmpData, data, szData);
+            return res;
+        }
+        public byte DeleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return deleteFileNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte DeleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus)
+        {
+            return deleteAllFilesNeuroEEG(ptr, fileExt, out outStatus);
+        }
+        public byte ReadFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus)
+        {
+            return readFileCRC32NeuroEEG(ptr, fileName, totalSize, offsetStart, out crc32Out, out outStatus);
+        }
+        public byte FileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return fileStreamAutosaveNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte FileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus)
+        {
+            return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
+        }
+        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+        {
+            return readPhotoStimNeuroEEG(ptr);
+        }
+	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+        {
+            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+        }
+
+        public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addFileStreamReadCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveFileStreamReadCallbackNeuroEEG(IntPtr handle)
+        {
+            removeFileStreamReadCallbackNeuroEEG(handle);
+        }
+
+        public byte CreateSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus)
+        {
+            return createSignalProcessParamNeuroEEG(ampParam, out paramOut, out outStatus);
+        }
+        public void RemoveSignalProcessParamNeuroEEG(IntPtr param)
+        {
+            removeSignalProcessParamNeuroEEG(param);
+        }
+        public byte ParseRawSignalNeuroEEG(byte[] data, out uint szDataReadyOut, IntPtr processParam, out SignalChannelsData[] signalOut, out ResistChannelsData[] resistOut, out OpStatus outStatus)
+        {
+            var maxSamples = Math.Max(data.Length / 158 * 36, 1000);
+            var tmpSignal = new SignalChannelsDataNative[maxSamples];
+            var tmpResist = new ResistChannelsDataNative[maxSamples];
+            uint szReady = (uint)data.Length;
+            uint szSignal = (uint)tmpSignal.Length;
+            uint szResist = (uint)tmpResist.Length;
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                tmpSignal[i].SzSamples = SdkLibConst.NeuroEEGMaxChCount;
+                tmpSignal[i].Samples = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+
+                tmpResist[i].SzValues = SdkLibConst.NeuroEEGMaxChCount;
+                tmpResist[i].Values = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+            }
+            var res = parseRawSignalNeuroEEG(data, ref szReady, processParam, tmpSignal, ref szSignal, tmpResist, ref szResist, out outStatus);
+
+            signalOut = new SignalChannelsData[outStatus.Success ? szSignal : 0];
+            resistOut = new ResistChannelsData[outStatus.Success ? szResist : 0];
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                if (szSignal != 0)
+                {
+                    --szSignal;
+                    signalOut[i].Samples = new NativeArrayMarshaler<double>().MarshalArray(tmpSignal[i].Samples, (IntPtr)tmpSignal[i].SzSamples);
+                    signalOut[i].PackNum = tmpSignal[i].PackNum;
+                    signalOut[i].Marker = tmpSignal[i].Marker;
+                }
+                if (szResist != 0)
+                {
+                    --szResist;
+                    resistOut[i].Values = new NativeArrayMarshaler<double>().MarshalArray(tmpResist[i].Values, (IntPtr)tmpResist[i].SzValues);
+                    resistOut[i].PackNum = tmpResist[i].PackNum;
+                    resistOut[i].A1 = tmpResist[i].A1;
+                    resistOut[i].A2 = tmpResist[i].A2;
+                    resistOut[i].Bias = tmpResist[i].Bias;
+                }
+                Marshal.FreeHGlobal(tmpSignal[i].Samples);
+                Marshal.FreeHGlobal(tmpResist[i].Values);
+            }
+            szDataReadyOut = szReady;
+            return res;
+        }
+        public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
             return addSignalCallbackBrainBit2(ptr, callback, out handleOut, userData, out outStatus);
         }
@@ -2827,6 +3989,35 @@ namespace NeuroSDK
         private static extern void removeFPGDataCallback(IntPtr handle);
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeStimModeCallback(IntPtr handle);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -2930,6 +4121,75 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalRawCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void calcCRC32(byte[] data, uint szData, out uint crc32Out);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoAllNeuroEEG(IntPtr ptr, [In, Out] SensorFileInfo[] filesInfoOut, ref uint szFilesInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint szData, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readFileNeuroEEG(IntPtr ptr, string fileName, [In, Out] byte[] data, ref uint szDataInOut, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeFileStreamReadCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte createSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalProcessParamNeuroEEG(IntPtr param);
+        // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -3384,6 +4644,71 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
+        {
+            return readStimMode(ptr, out modeOut, out outStatus);
+        }
+
+        public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
+        {
+            int sz = getMaxStimulPhasesCountSensor(ptr);
+            StimulPhase[] valArr = new StimulPhase[sz];
+            var res = readStimPrograms(ptr, valArr, ref sz, out outStatus);
+            stimProgramsOut = new StimulPhase[outStatus.Success ? sz : 0];
+            if (outStatus.Success)
+            {
+                Array.Copy(valArr, 0, stimProgramsOut, 0, sz);
+            }
+            return res;
+        }
+        public byte WriteStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, out OpStatus outStatus)
+        {
+            return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
+        }
+
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
+        }
+        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
+        {
+            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+        }
+
+        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        {
+            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+        }
+        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        {
+            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+        }
+
+        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        {
+            removePhotoStimSyncStateCallback(handle);
+        }
+        public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedEEGChannels(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
 
 
         public byte AddBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -3411,7 +4736,201 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-                public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        {
+            return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
+        }
+        public byte WriteSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus)
+        {
+            return writeSurveyIdNeuroEEG(ptr, surveyId, out outStatus);
+        }
+
+        public byte ReadAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamNeuroEEG(ptr, out ampParamOut, out outStatus);
+        }
+	    public byte WriteAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamNeuroEEG(ptr, ampParam, out outStatus);
+        }
+
+        public byte AddSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalCallbackNeuroEEG(handle);
+        }
+        public byte AddResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalRawCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalRawCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalRawCallbackNeuroEEG(handle);
+        }
+
+        public uint CalcCRC32(byte[] data)
+        {
+            uint val;
+            calcCRC32(data, (uint)data.Length, out val);
+            return val;
+        }
+        public byte ReadSupportedChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
+        public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
+        {
+            return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
+        }
+        public byte ReadFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus)
+        {
+            return readFileSystemDiskInfoNeuroEEG(ptr, out diskInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus)
+        {
+            return readFileInfoNeuroEEG(ptr, fileName, out fileInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoAllNeuroEEG(IntPtr ptr, out SensorFileInfo[] filesInfoOut, uint maxFiles, out OpStatus outStatus)
+        {
+            var tmpFiles = new SensorFileInfo[maxFiles];
+            var res = readFileInfoAllNeuroEEG(ptr, tmpFiles, ref maxFiles, out outStatus);
+            filesInfoOut = outStatus.Success ? new SensorFileInfo[maxFiles] : new SensorFileInfo[0];
+            if(outStatus.Success)
+                Array.Copy(tmpFiles, filesInfoOut, maxFiles);
+            return res;
+        }
+        public byte WriteFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint offsetStart, out OpStatus outStatus)
+        {
+            return writeFileNeuroEEG(ptr, fileName, data, (uint)(data.Length), offsetStart, out outStatus);
+        }
+        public byte ReadFileNeuroEEG(IntPtr ptr, string fileName, out byte[] data, uint szData, uint offsetStart, out OpStatus outStatus)
+        {
+            byte[] tmpData = new byte[szData];
+            var res = readFileNeuroEEG(ptr, fileName, tmpData, ref szData, offsetStart, out outStatus);
+            data = outStatus.Success ? new byte[szData] : new byte[0];
+            if(outStatus.Success)
+                Array.Copy(tmpData, data, szData);
+            return res;
+        }
+        public byte DeleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return deleteFileNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte DeleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus)
+        {
+            return deleteAllFilesNeuroEEG(ptr, fileExt, out outStatus);
+        }
+        public byte ReadFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus)
+        {
+            return readFileCRC32NeuroEEG(ptr, fileName, totalSize, offsetStart, out crc32Out, out outStatus);
+        }
+        public byte FileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return fileStreamAutosaveNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte FileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus)
+        {
+            return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
+        }
+        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+        {
+            return readPhotoStimNeuroEEG(ptr);
+        }
+	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+        {
+            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+        }
+
+        public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addFileStreamReadCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveFileStreamReadCallbackNeuroEEG(IntPtr handle)
+        {
+            removeFileStreamReadCallbackNeuroEEG(handle);
+        }
+
+        public byte CreateSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus)
+        {
+            return createSignalProcessParamNeuroEEG(ampParam, out paramOut, out outStatus);
+        }
+        public void RemoveSignalProcessParamNeuroEEG(IntPtr param)
+        {
+            removeSignalProcessParamNeuroEEG(param);
+        }
+        public byte ParseRawSignalNeuroEEG(byte[] data, out uint szDataReadyOut, IntPtr processParam, out SignalChannelsData[] signalOut, out ResistChannelsData[] resistOut, out OpStatus outStatus)
+        {
+            var maxSamples = Math.Max(data.Length / 158 * 36, 1000);
+            var tmpSignal = new SignalChannelsDataNative[maxSamples];
+            var tmpResist = new ResistChannelsDataNative[maxSamples];
+            uint szReady = (uint)data.Length;
+            uint szSignal = (uint)tmpSignal.Length;
+            uint szResist = (uint)tmpResist.Length;
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                tmpSignal[i].SzSamples = SdkLibConst.NeuroEEGMaxChCount;
+                tmpSignal[i].Samples = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+
+                tmpResist[i].SzValues = SdkLibConst.NeuroEEGMaxChCount;
+                tmpResist[i].Values = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+            }
+            var res = parseRawSignalNeuroEEG(data, ref szReady, processParam, tmpSignal, ref szSignal, tmpResist, ref szResist, out outStatus);
+
+            signalOut = new SignalChannelsData[outStatus.Success ? szSignal : 0];
+            resistOut = new ResistChannelsData[outStatus.Success ? szResist : 0];
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                if (szSignal != 0)
+                {
+                    --szSignal;
+                    signalOut[i].Samples = new NativeArrayMarshaler<double>().MarshalArray(tmpSignal[i].Samples, (IntPtr)tmpSignal[i].SzSamples);
+                    signalOut[i].PackNum = tmpSignal[i].PackNum;
+                    signalOut[i].Marker = tmpSignal[i].Marker;
+                }
+                if (szResist != 0)
+                {
+                    --szResist;
+                    resistOut[i].Values = new NativeArrayMarshaler<double>().MarshalArray(tmpResist[i].Values, (IntPtr)tmpResist[i].SzValues);
+                    resistOut[i].PackNum = tmpResist[i].PackNum;
+                    resistOut[i].A1 = tmpResist[i].A1;
+                    resistOut[i].A2 = tmpResist[i].A2;
+                    resistOut[i].Bias = tmpResist[i].Bias;
+                }
+                Marshal.FreeHGlobal(tmpSignal[i].Samples);
+                Marshal.FreeHGlobal(tmpResist[i].Values);
+            }
+            szDataReadyOut = szReady;
+            return res;
+        }
+        public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
             return addSignalCallbackBrainBit2(ptr, callback, out handleOut, userData, out outStatus);
         }
@@ -3625,6 +5144,35 @@ namespace NeuroSDK
         private static extern void removeFPGDataCallback(IntPtr handle);
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeStimModeCallback(IntPtr handle);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -3728,6 +5276,75 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalRawCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void calcCRC32(byte[] data, uint szData, out uint crc32Out);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoAllNeuroEEG(IntPtr ptr, [In, Out] SensorFileInfo[] filesInfoOut, ref uint szFilesInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint szData, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readFileNeuroEEG(IntPtr ptr, string fileName, [In, Out] byte[] data, ref uint szDataInOut, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeFileStreamReadCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte createSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalProcessParamNeuroEEG(IntPtr param);
+        // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -4182,6 +5799,71 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
+        {
+            return readStimMode(ptr, out modeOut, out outStatus);
+        }
+
+        public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
+        {
+            int sz = getMaxStimulPhasesCountSensor(ptr);
+            StimulPhase[] valArr = new StimulPhase[sz];
+            var res = readStimPrograms(ptr, valArr, ref sz, out outStatus);
+            stimProgramsOut = new StimulPhase[outStatus.Success ? sz : 0];
+            if (outStatus.Success)
+            {
+                Array.Copy(valArr, 0, stimProgramsOut, 0, sz);
+            }
+            return res;
+        }
+        public byte WriteStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, out OpStatus outStatus)
+        {
+            return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
+        }
+
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
+        }
+        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
+        {
+            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+        }
+
+        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        {
+            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+        }
+        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        {
+            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+        }
+
+        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        {
+            removePhotoStimSyncStateCallback(handle);
+        }
+        public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedEEGChannels(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
 
 
         public byte AddBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -4209,7 +5891,201 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-                public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        {
+            return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
+        }
+        public byte WriteSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus)
+        {
+            return writeSurveyIdNeuroEEG(ptr, surveyId, out outStatus);
+        }
+
+        public byte ReadAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamNeuroEEG(ptr, out ampParamOut, out outStatus);
+        }
+	    public byte WriteAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamNeuroEEG(ptr, ampParam, out outStatus);
+        }
+
+        public byte AddSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalCallbackNeuroEEG(handle);
+        }
+        public byte AddResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalRawCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalRawCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalRawCallbackNeuroEEG(handle);
+        }
+
+        public uint CalcCRC32(byte[] data)
+        {
+            uint val;
+            calcCRC32(data, (uint)data.Length, out val);
+            return val;
+        }
+        public byte ReadSupportedChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
+        public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
+        {
+            return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
+        }
+        public byte ReadFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus)
+        {
+            return readFileSystemDiskInfoNeuroEEG(ptr, out diskInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus)
+        {
+            return readFileInfoNeuroEEG(ptr, fileName, out fileInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoAllNeuroEEG(IntPtr ptr, out SensorFileInfo[] filesInfoOut, uint maxFiles, out OpStatus outStatus)
+        {
+            var tmpFiles = new SensorFileInfo[maxFiles];
+            var res = readFileInfoAllNeuroEEG(ptr, tmpFiles, ref maxFiles, out outStatus);
+            filesInfoOut = outStatus.Success ? new SensorFileInfo[maxFiles] : new SensorFileInfo[0];
+            if(outStatus.Success)
+                Array.Copy(tmpFiles, filesInfoOut, maxFiles);
+            return res;
+        }
+        public byte WriteFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint offsetStart, out OpStatus outStatus)
+        {
+            return writeFileNeuroEEG(ptr, fileName, data, (uint)(data.Length), offsetStart, out outStatus);
+        }
+        public byte ReadFileNeuroEEG(IntPtr ptr, string fileName, out byte[] data, uint szData, uint offsetStart, out OpStatus outStatus)
+        {
+            byte[] tmpData = new byte[szData];
+            var res = readFileNeuroEEG(ptr, fileName, tmpData, ref szData, offsetStart, out outStatus);
+            data = outStatus.Success ? new byte[szData] : new byte[0];
+            if(outStatus.Success)
+                Array.Copy(tmpData, data, szData);
+            return res;
+        }
+        public byte DeleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return deleteFileNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte DeleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus)
+        {
+            return deleteAllFilesNeuroEEG(ptr, fileExt, out outStatus);
+        }
+        public byte ReadFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus)
+        {
+            return readFileCRC32NeuroEEG(ptr, fileName, totalSize, offsetStart, out crc32Out, out outStatus);
+        }
+        public byte FileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return fileStreamAutosaveNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte FileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus)
+        {
+            return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
+        }
+        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+        {
+            return readPhotoStimNeuroEEG(ptr);
+        }
+	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+        {
+            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+        }
+
+        public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addFileStreamReadCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveFileStreamReadCallbackNeuroEEG(IntPtr handle)
+        {
+            removeFileStreamReadCallbackNeuroEEG(handle);
+        }
+
+        public byte CreateSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus)
+        {
+            return createSignalProcessParamNeuroEEG(ampParam, out paramOut, out outStatus);
+        }
+        public void RemoveSignalProcessParamNeuroEEG(IntPtr param)
+        {
+            removeSignalProcessParamNeuroEEG(param);
+        }
+        public byte ParseRawSignalNeuroEEG(byte[] data, out uint szDataReadyOut, IntPtr processParam, out SignalChannelsData[] signalOut, out ResistChannelsData[] resistOut, out OpStatus outStatus)
+        {
+            var maxSamples = Math.Max(data.Length / 158 * 36, 1000);
+            var tmpSignal = new SignalChannelsDataNative[maxSamples];
+            var tmpResist = new ResistChannelsDataNative[maxSamples];
+            uint szReady = (uint)data.Length;
+            uint szSignal = (uint)tmpSignal.Length;
+            uint szResist = (uint)tmpResist.Length;
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                tmpSignal[i].SzSamples = SdkLibConst.NeuroEEGMaxChCount;
+                tmpSignal[i].Samples = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+
+                tmpResist[i].SzValues = SdkLibConst.NeuroEEGMaxChCount;
+                tmpResist[i].Values = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+            }
+            var res = parseRawSignalNeuroEEG(data, ref szReady, processParam, tmpSignal, ref szSignal, tmpResist, ref szResist, out outStatus);
+
+            signalOut = new SignalChannelsData[outStatus.Success ? szSignal : 0];
+            resistOut = new ResistChannelsData[outStatus.Success ? szResist : 0];
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                if (szSignal != 0)
+                {
+                    --szSignal;
+                    signalOut[i].Samples = new NativeArrayMarshaler<double>().MarshalArray(tmpSignal[i].Samples, (IntPtr)tmpSignal[i].SzSamples);
+                    signalOut[i].PackNum = tmpSignal[i].PackNum;
+                    signalOut[i].Marker = tmpSignal[i].Marker;
+                }
+                if (szResist != 0)
+                {
+                    --szResist;
+                    resistOut[i].Values = new NativeArrayMarshaler<double>().MarshalArray(tmpResist[i].Values, (IntPtr)tmpResist[i].SzValues);
+                    resistOut[i].PackNum = tmpResist[i].PackNum;
+                    resistOut[i].A1 = tmpResist[i].A1;
+                    resistOut[i].A2 = tmpResist[i].A2;
+                    resistOut[i].Bias = tmpResist[i].Bias;
+                }
+                Marshal.FreeHGlobal(tmpSignal[i].Samples);
+                Marshal.FreeHGlobal(tmpResist[i].Values);
+            }
+            szDataReadyOut = szReady;
+            return res;
+        }
+        public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
             return addSignalCallbackBrainBit2(ptr, callback, out handleOut, userData, out outStatus);
         }
@@ -4424,6 +6300,35 @@ namespace NeuroSDK
         private static extern void removeFPGDataCallback(IntPtr handle);
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeStimModeCallback(IntPtr handle);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -4527,6 +6432,75 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalResistCallbackNeuroEEG(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeSignalRawCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void calcCRC32(byte[] data, uint szData, out uint crc32Out);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileInfoAllNeuroEEG(IntPtr ptr, [In, Out] SensorFileInfo[] filesInfoOut, ref uint szFilesInfoOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint szData, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readFileNeuroEEG(IntPtr ptr, string fileName, [In, Out] byte[] data, ref uint szDataInOut, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte deleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern void removeFileStreamReadCallbackNeuroEEG(IntPtr handle);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte createSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalProcessParamNeuroEEG(IntPtr param);
+        // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -4981,6 +6955,71 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
+        {
+            return readStimMode(ptr, out modeOut, out outStatus);
+        }
+
+        public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
+        {
+            int sz = getMaxStimulPhasesCountSensor(ptr);
+            StimulPhase[] valArr = new StimulPhase[sz];
+            var res = readStimPrograms(ptr, valArr, ref sz, out outStatus);
+            stimProgramsOut = new StimulPhase[outStatus.Success ? sz : 0];
+            if (outStatus.Success)
+            {
+                Array.Copy(valArr, 0, stimProgramsOut, 0, sz);
+            }
+            return res;
+        }
+        public byte WriteStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, out OpStatus outStatus)
+        {
+            return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
+        }
+
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
+        }
+        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
+        {
+            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+        }
+
+        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        {
+            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+        }
+        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        {
+            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+        }
+
+        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        {
+            removePhotoStimSyncStateCallback(handle);
+        }
+        public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedEEGChannels(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
 
 
         public byte AddBatteryCallback(IntPtr ptr, BatteryCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -5008,7 +7047,201 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-                public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        {
+            return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
+        }
+        public byte WriteSurveyIdNeuroEEG(IntPtr ptr, uint surveyId, out OpStatus outStatus)
+        {
+            return writeSurveyIdNeuroEEG(ptr, surveyId, out outStatus);
+        }
+
+        public byte ReadAmplifierParamNeuroEEG(IntPtr ptr, out NeuroEEGAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamNeuroEEG(ptr, out ampParamOut, out outStatus);
+        }
+	    public byte WriteAmplifierParamNeuroEEG(IntPtr ptr, NeuroEEGAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamNeuroEEG(ptr, ampParam, out outStatus);
+        }
+
+        public byte AddSignalCallbackNeuroEEG(IntPtr ptr, SignalCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalCallbackNeuroEEG(handle);
+        }
+        public byte AddResistCallbackNeuroEEG(IntPtr ptr, ResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalResistCallbackNeuroEEG(IntPtr ptr, SignalResistCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalResistCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalResistCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalResistCallbackNeuroEEG(handle);
+        }
+        public byte AddSignalRawCallbackNeuroEEG(IntPtr ptr, SignalRawCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalRawCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalRawCallbackNeuroEEG(IntPtr handle)
+        {
+            removeSignalRawCallbackNeuroEEG(handle);
+        }
+
+        public uint CalcCRC32(byte[] data)
+        {
+            uint val;
+            calcCRC32(data, (uint)data.Length, out val);
+            return val;
+        }
+        public byte ReadSupportedChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readSupportedChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
+        public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
+        {
+            return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
+        }
+        public byte ReadFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus)
+        {
+            return readFileSystemDiskInfoNeuroEEG(ptr, out diskInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus)
+        {
+            return readFileInfoNeuroEEG(ptr, fileName, out fileInfoOut, out outStatus);
+        }
+        public byte ReadFileInfoAllNeuroEEG(IntPtr ptr, out SensorFileInfo[] filesInfoOut, uint maxFiles, out OpStatus outStatus)
+        {
+            var tmpFiles = new SensorFileInfo[maxFiles];
+            var res = readFileInfoAllNeuroEEG(ptr, tmpFiles, ref maxFiles, out outStatus);
+            filesInfoOut = outStatus.Success ? new SensorFileInfo[maxFiles] : new SensorFileInfo[0];
+            if(outStatus.Success)
+                Array.Copy(tmpFiles, filesInfoOut, maxFiles);
+            return res;
+        }
+        public byte WriteFileNeuroEEG(IntPtr ptr, string fileName, byte[] data, uint offsetStart, out OpStatus outStatus)
+        {
+            return writeFileNeuroEEG(ptr, fileName, data, (uint)(data.Length), offsetStart, out outStatus);
+        }
+        public byte ReadFileNeuroEEG(IntPtr ptr, string fileName, out byte[] data, uint szData, uint offsetStart, out OpStatus outStatus)
+        {
+            byte[] tmpData = new byte[szData];
+            var res = readFileNeuroEEG(ptr, fileName, tmpData, ref szData, offsetStart, out outStatus);
+            data = outStatus.Success ? new byte[szData] : new byte[0];
+            if(outStatus.Success)
+                Array.Copy(tmpData, data, szData);
+            return res;
+        }
+        public byte DeleteFileNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return deleteFileNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte DeleteAllFilesNeuroEEG(IntPtr ptr, string fileExt, out OpStatus outStatus)
+        {
+            return deleteAllFilesNeuroEEG(ptr, fileExt, out outStatus);
+        }
+        public byte ReadFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus)
+        {
+            return readFileCRC32NeuroEEG(ptr, fileName, totalSize, offsetStart, out crc32Out, out outStatus);
+        }
+        public byte FileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus)
+        {
+            return fileStreamAutosaveNeuroEEG(ptr, fileName, out outStatus);
+        }
+        public byte FileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus)
+        {
+            return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
+        }
+        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+        {
+            return readPhotoStimNeuroEEG(ptr);
+        }
+	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+        {
+            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+        }
+
+        public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addFileStreamReadCallbackNeuroEEG(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveFileStreamReadCallbackNeuroEEG(IntPtr handle)
+        {
+            removeFileStreamReadCallbackNeuroEEG(handle);
+        }
+
+        public byte CreateSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus)
+        {
+            return createSignalProcessParamNeuroEEG(ampParam, out paramOut, out outStatus);
+        }
+        public void RemoveSignalProcessParamNeuroEEG(IntPtr param)
+        {
+            removeSignalProcessParamNeuroEEG(param);
+        }
+        public byte ParseRawSignalNeuroEEG(byte[] data, out uint szDataReadyOut, IntPtr processParam, out SignalChannelsData[] signalOut, out ResistChannelsData[] resistOut, out OpStatus outStatus)
+        {
+            var maxSamples = Math.Max(data.Length / 158 * 36, 1000);
+            var tmpSignal = new SignalChannelsDataNative[maxSamples];
+            var tmpResist = new ResistChannelsDataNative[maxSamples];
+            uint szReady = (uint)data.Length;
+            uint szSignal = (uint)tmpSignal.Length;
+            uint szResist = (uint)tmpResist.Length;
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                tmpSignal[i].SzSamples = SdkLibConst.NeuroEEGMaxChCount;
+                tmpSignal[i].Samples = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+
+                tmpResist[i].SzValues = SdkLibConst.NeuroEEGMaxChCount;
+                tmpResist[i].Values = Marshal.AllocHGlobal(SdkLibConst.NeuroEEGMaxChCount * sizeof(double));
+            }
+            var res = parseRawSignalNeuroEEG(data, ref szReady, processParam, tmpSignal, ref szSignal, tmpResist, ref szResist, out outStatus);
+
+            signalOut = new SignalChannelsData[outStatus.Success ? szSignal : 0];
+            resistOut = new ResistChannelsData[outStatus.Success ? szResist : 0];
+            for (int i = 0; i < maxSamples; ++i)
+            {
+                if (szSignal != 0)
+                {
+                    --szSignal;
+                    signalOut[i].Samples = new NativeArrayMarshaler<double>().MarshalArray(tmpSignal[i].Samples, (IntPtr)tmpSignal[i].SzSamples);
+                    signalOut[i].PackNum = tmpSignal[i].PackNum;
+                    signalOut[i].Marker = tmpSignal[i].Marker;
+                }
+                if (szResist != 0)
+                {
+                    --szResist;
+                    resistOut[i].Values = new NativeArrayMarshaler<double>().MarshalArray(tmpResist[i].Values, (IntPtr)tmpResist[i].SzValues);
+                    resistOut[i].PackNum = tmpResist[i].PackNum;
+                    resistOut[i].A1 = tmpResist[i].A1;
+                    resistOut[i].A2 = tmpResist[i].A2;
+                    resistOut[i].Bias = tmpResist[i].Bias;
+                }
+                Marshal.FreeHGlobal(tmpSignal[i].Samples);
+                Marshal.FreeHGlobal(tmpResist[i].Values);
+            }
+            szDataReadyOut = szReady;
+            return res;
+        }
+        public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
             return addSignalCallbackBrainBit2(ptr, callback, out handleOut, userData, out outStatus);
         }

@@ -81,6 +81,9 @@ namespace NeuroSDK
                     return new BrainBitSensor(sensorPtr);
                 case SensorFamily.SensorLEBrainBitBlack:
                     return new BrainBitBlackSensor(sensorPtr);
+
+                case SensorFamily.SensorLENeuroEEG:
+                    return new NeuroEEGSensor(sensorPtr);
                 case SensorFamily.SensorLEBrainBit2:
                 case SensorFamily.SensorLEBrainBitPro:
                 case SensorFamily.SensorLEBrainBitFlex:

@@ -18,7 +18,6 @@ namespace NeuroSDK
         public const int NeuroBAMMaxChCount = 8;
         
         public const int BrainBit2MaxChCount = 8;
-        
     }
 
     /// <summary>
@@ -48,13 +47,14 @@ namespace NeuroSDK
         
         
         
-        
+        SensorLENeuroEEG = 14,
         
         
         
         SensorLEBrainBit2 = 18,
         SensorLEBrainBitPro = 19,
         SensorLEBrainBitFlex = 20,
+        
         
     }
 
@@ -94,7 +94,8 @@ namespace NeuroSDK
         FeatureEnvelope,
         FeaturePhotoStimulator,
         FeatureAcousticStimulator,
-        FeatureFlashCard
+        FeatureFlashCard,
+        FeatureLedChannels,
     }
     /// <summary>
     /// Sensor firmware mode
@@ -199,7 +200,9 @@ namespace NeuroSDK
 	    ParameterPhotoStimTimeDefer,
         ParameterPhotoStimSyncState,
 	    ParameterSensorPhotoStim,
-	    ParameterPhotoStimMode
+	    ParameterStimMode,
+	    ParameterLedChannels,
+        ParameterLedState
     }
     /// <summary>
     /// Sensor parameter access
@@ -265,6 +268,7 @@ namespace NeuroSDK
         SensorGain6,
         SensorGain8,
         SensorGain12,
+        SensorGain24,
         SensorGain5,
 	    SensorGain2x,
 	    SensorGain4x,
@@ -720,7 +724,13 @@ namespace NeuroSDK
         EEGChIdCZ,
         EEGChIdFZ,
         EEGChIdFpZ,
-        EEGChIdD3
+        EEGChIdD3,
+
+        EEGChIdRef,
+	    EEGChIdA1,
+	    EEGChIdA2,
+	    EEGChIdGnd1,
+	    EEGChIdGnd2
     }
     /// <summary>
     /// EEG Channel Info
@@ -755,7 +765,91 @@ namespace NeuroSDK
     }
 
     
-    
+        public enum EEGRefMode : byte
+    {
+	    RefHeadTop = 1,
+	    RefA1A2
+    }
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential)]
+    public struct NeuroEEGAmplifierParam {
+        [MarshalAs(UnmanagedType.I1)]
+	    public bool ReferentResistMesureAllow;
+	    public SensorSamplingFrequency Frequency;
+	    public EEGRefMode ReferentMode;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.NeuroEEGMaxChCount)]
+        public EEGChannelMode[] ChannelMode;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.NeuroEEGMaxChCount)]
+        public SensorGain[] ChannelGain;
+        [MarshalAs(UnmanagedType.I1)]
+	    public bool RespirationOn;
+    }
+    public struct ResistChannelsData {
+	    public uint PackNum;
+	    public double A1;
+	    public double A2;
+	    public double Bias;
+	    public double[] Values;
+    }
+
+    public delegate void NeuroEEGSignalDataRecived(ISensor sensor, SignalChannelsData[] data);
+    public delegate void NeuroEEGResistDataRecived(ISensor sensor, ResistChannelsData[] data);
+    public delegate void NeuroEEGSignalResistDataRecived(ISensor sensor, SignalChannelsData[] signalData, ResistChannelsData[] resistData);
+    public delegate void NeuroEEGSignalRawDataRecived(ISensor sensor, byte[] data);
+
+        public enum SensorFSStatus : byte
+    {
+	    FSStatusOK,
+	    FSStatusNoInit,
+	    FSStatusNoDisk,
+	    FSStatusProtect
+    }
+    public enum SensorFSIOStatus : byte
+    {
+	    FSIOStatusNoError,
+	    FSIOStatusIOError,
+	    FSIOStatusTimeout
+    }
+    public enum SensorFSStreamStatus : byte
+    {
+	    FSStreamStatusClosed,
+	    FSStreamStatusWrite,
+	    FSStreamStatusRead
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct NeuroEEGFSStatus {
+	    public SensorFSStatus Status;
+	    public SensorFSIOStatus IOStatus;
+	    public SensorFSStreamStatus StreamStatus;
+	    [MarshalAs(UnmanagedType.I1)]
+	    public bool AutosaveSignal;
+    }
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SensorFileInfo {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = SdkLibConst.FileNameMaxLen)]
+        public string FileName;
+	    public uint FileSize;
+	    public ushort ModifiedYear;
+	    public byte ModifiedMonth;
+	    public byte ModifiedDayOfMonth;
+	    public byte ModifiedHour;
+	    public byte ModifiedMin;
+	    public byte ModifiedSec;
+	    public byte Attribute;
+    }
+    public struct SensorFileData {
+	    public uint OffsetStart;
+	    public uint DataAmount;
+	    public byte[] Data;
+    }
+    public struct SensorDiskInfo {
+	    public ulong TotalSize;
+	    public ulong FreeSize;
+    }
+
+    public delegate void NeuroEEGFileStreamReadRecived(ISensor sensor, SensorFileData[] data);
+
     
     
     
@@ -777,6 +871,43 @@ namespace NeuroSDK
         public SensorGain[] ChGain;
         public GenCurrent Current;
     }
+
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential)]
+    public struct StimulPhase {
+        // Stimulation frequency
+	    public double Frequency;
+        // Stimulus power 0...100 %
+	    public double Power;
+        // Duration of a single stimulation pulse
+	    public double Pulse;
+        // Stimulation phase duration
+	    public double StimulDuration;
+        // Duration of pause after the stimulation phase
+	    public double Pause;
+        // Filling frequency of the signal for acoustic stimulation
+	    public double FillingFrequency;
+    }
+    public enum SensorStimulMode : byte
+    {
+        StimulModeInvalid,
+	    StimulModeStopped,
+	    StimulModePendingSync,
+	    StimulModeSynchronized,
+	    StimulModeStimProgrammRuning,
+	    StimulModeError
+    }
+
+    public delegate void SensorStimulModeChanged(ISensor sensor, SensorStimulMode mode);
+
+    
+    public enum SensorStimulSyncState : byte
+    {
+	    StimulSyncNormal,
+	    StimulSyncTimeOut
+    };
+
+    public delegate void SensorStimulSyncStateChanged(ISensor sensor, SensorStimulSyncState state);
 
     
     #endregion
