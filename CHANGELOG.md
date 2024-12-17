@@ -1,3 +1,6 @@
+v1.0.9
+Added Dragon EEG (NeuroEEG) device
+
 v1.0.8
 1. Fixes Android crashes when disconnecting the device 
 2. Added an exception on iOS and MacOS if an attempt is made to start a search with bluetooth turned off

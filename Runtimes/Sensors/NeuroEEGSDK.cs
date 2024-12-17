@@ -36,7 +36,6 @@ namespace NeuroSDK
         public event NeuroEEGSignalRawDataRecived? EventNeuroEEGSignalRawDataRecived;
         public event NeuroEEGFileStreamReadRecived? EventNeuroEEGFileStreamReadRecived;
 
-        private PhotoStimSensor? _photoStim;
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 
         internal NeuroEEGSensor(IntPtr sensorPtr) : base(sensorPtr)
@@ -258,20 +257,6 @@ namespace NeuroSDK
                 SDKApiFactory.ThrowIfError(opSt, error);
             }
         }
-#pragma warning disable CS8632
-        public PhotoStimSensor? PhotoStim
-        {
-            get => _photoStim;
-            set
-            {
-                if (_photoStim == value) return;
-                OpStatus opSt;
-                byte error = SDKApiFactory.Inst.WritePhotoStimNeuroEEG(_sensorPtr, value == null ? IntPtr.Zero : value._sensorPtr, out opSt);
-                SDKApiFactory.ThrowIfError(opSt, error);
-                _photoStim = value;
-            }
-        }
-#pragma warning restore CS8632
 
         public SensorFileInfo ReadFileInfoNeuroEEG(string fileName)
         {
