@@ -1,3 +1,6 @@
+v1.0.10
+Fixed load Android lib
+
 v1.0.9
 Added Dragon EEG (NeuroEEG) device
 
