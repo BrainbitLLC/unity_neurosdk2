@@ -84,6 +84,17 @@ namespace NeuroSDK
         public IntPtr Samples;
         public IntPtr Referents;
     }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SmartBandAmplifierParamNative
+    {
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = SdkLibConst.SmartBandMaxChCount)]
+        public byte[] ChSignalUse;
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = SdkLibConst.SmartBandMaxChCount)]
+	    public byte[] ChResistUse;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.SmartBandMaxChCount)]
+	    public SensorGain[] ChGain;
+	    public GenCurrent Current;
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct BrainBit2AmplifierParamNative
@@ -152,8 +163,16 @@ namespace NeuroSDK
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void SignalDataCallbackBrainBitSensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] BrainBitSignalData[] dataArray, [In] int dataSize, IntPtr userData);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void ResistCallbackHeadbandSensor(IntPtr ptr, HeadbandResistData data, IntPtr userData);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void SignalDataCallbackHeadbandSensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] HeadbandSignalData[] dataArray, [In] int dataSize, IntPtr userData);
 
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void SignalDataCallbackHeadphones2Sensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] Headphones2SignalData[] dataArray, [In] int dataSize, IntPtr userData);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void ResistCallbackHeadphones2Sensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] Headphones2ResistData[] dataArray, [In] int dataSize, IntPtr userData);
 
 
  
@@ -330,8 +349,18 @@ namespace NeuroSDK
         byte AddSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         void RemoveSignalDataCallbackBrainBit(IntPtr handle);
 
+		byte AddResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveResistCallbackHeadband(IntPtr handle);
+    	byte AddSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveSignalDataCallbackHeadband(IntPtr handle);
 
 
+	    byte ReadAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus);
+        byte WriteAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus);
+        byte AddSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveSignalDataCallbackHeadphones2(IntPtr handle);
+        byte AddResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveResistCallbackHeadphones2(IntPtr handle);
 
         // -----===== NeuroEEG / CompactNeuro3 =====-----
         byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
@@ -376,6 +405,9 @@ namespace NeuroSDK
 
 
 
+
+	    byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
+	    byte WriteAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus);
 
         // -----===== BrainBit2 =====-----
         byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -655,6 +687,27 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadband(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadband(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadphones2(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadphones2(IntPtr handle);  
 	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -724,6 +777,10 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -1270,7 +1327,47 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        public byte AddResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadband(IntPtr handle)
+        {
+            removeResistCallbackHeadband(handle);
+        }
+        public byte AddSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadband(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadband(handle);
+        }
+	    public byte ReadAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamHeadphones2(ptr, out ampParamOut, out outStatus);
+        }
+        public byte WriteAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamHeadphones2(ptr, ampParam, out outStatus);
+        }
+        public byte AddSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadphones2(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadphones2(handle);
+        }
+        public byte AddResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadphones2(IntPtr handle)
+        {
+            removeResistCallbackHeadphones2(handle);
+        }
+	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
         {
             return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
         }
@@ -1463,6 +1560,56 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            var res = readAmplifierParamSmartBand(ptr, out ampParamOut, out outStatus);
+            if (outStatus.Success)
+            {
+                var cnt = getChannelsCountSensor(ptr);
+                if (ampParamOut.ChSignalUse.Length != cnt)
+                {
+                    var chSignalUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChSignalUse, chSignalUse, Math.Min(cnt, ampParamOut.ChSignalUse.Length));
+                    ampParamOut.ChSignalUse = chSignalUse;
+                }
+                if (ampParamOut.ChResistUse.Length != cnt)
+                {
+                    var chResistUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
+                    ampParamOut.ChResistUse = chResistUse;
+                }
+                if (ampParamOut.ChGain.Length != cnt)
+                {
+                    var chGain = new SensorGain[cnt];
+                    Array.Copy(ampParamOut.ChGain, chGain, Math.Min(cnt, ampParamOut.ChGain.Length));
+                    ampParamOut.ChGain = chGain;
+                }
+            }
+            return res;
+        }
+        public byte WriteAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            var cnt = SdkLibConst.SmartBandMaxChCount;
+            if (ampParam.ChSignalUse.Length != cnt)
+            {
+                var chSignalUse = new byte[cnt];
+                Array.Copy(ampParam.ChSignalUse, chSignalUse, Math.Min(cnt, ampParam.ChSignalUse.Length));
+                ampParam.ChSignalUse = chSignalUse;
+            }
+            if (ampParam.ChResistUse.Length != cnt)
+            {
+                var chResistUse = new byte[cnt];
+                Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
+                ampParam.ChResistUse = chResistUse;
+            }
+            if (ampParam.ChGain.Length != cnt)
+            {
+                var chGain = new SensorGain[cnt];
+                Array.Copy(ampParam.ChGain, chGain, Math.Min(cnt, ampParam.ChGain.Length));
+                ampParam.ChGain = chGain;
+            }
+            return writeAmplifierParamSmartBand(ptr, ampParam, out outStatus);
         }
         public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
@@ -1810,6 +1957,27 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadband(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadband(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadphones2(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadphones2(IntPtr handle);  
 	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -1879,6 +2047,10 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -2425,7 +2597,47 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        public byte AddResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadband(IntPtr handle)
+        {
+            removeResistCallbackHeadband(handle);
+        }
+        public byte AddSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadband(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadband(handle);
+        }
+	    public byte ReadAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamHeadphones2(ptr, out ampParamOut, out outStatus);
+        }
+        public byte WriteAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamHeadphones2(ptr, ampParam, out outStatus);
+        }
+        public byte AddSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadphones2(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadphones2(handle);
+        }
+        public byte AddResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadphones2(IntPtr handle)
+        {
+            removeResistCallbackHeadphones2(handle);
+        }
+	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
         {
             return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
         }
@@ -2618,6 +2830,56 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            var res = readAmplifierParamSmartBand(ptr, out ampParamOut, out outStatus);
+            if (outStatus.Success)
+            {
+                var cnt = getChannelsCountSensor(ptr);
+                if (ampParamOut.ChSignalUse.Length != cnt)
+                {
+                    var chSignalUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChSignalUse, chSignalUse, Math.Min(cnt, ampParamOut.ChSignalUse.Length));
+                    ampParamOut.ChSignalUse = chSignalUse;
+                }
+                if (ampParamOut.ChResistUse.Length != cnt)
+                {
+                    var chResistUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
+                    ampParamOut.ChResistUse = chResistUse;
+                }
+                if (ampParamOut.ChGain.Length != cnt)
+                {
+                    var chGain = new SensorGain[cnt];
+                    Array.Copy(ampParamOut.ChGain, chGain, Math.Min(cnt, ampParamOut.ChGain.Length));
+                    ampParamOut.ChGain = chGain;
+                }
+            }
+            return res;
+        }
+        public byte WriteAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            var cnt = SdkLibConst.SmartBandMaxChCount;
+            if (ampParam.ChSignalUse.Length != cnt)
+            {
+                var chSignalUse = new byte[cnt];
+                Array.Copy(ampParam.ChSignalUse, chSignalUse, Math.Min(cnt, ampParam.ChSignalUse.Length));
+                ampParam.ChSignalUse = chSignalUse;
+            }
+            if (ampParam.ChResistUse.Length != cnt)
+            {
+                var chResistUse = new byte[cnt];
+                Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
+                ampParam.ChResistUse = chResistUse;
+            }
+            if (ampParam.ChGain.Length != cnt)
+            {
+                var chGain = new SensorGain[cnt];
+                Array.Copy(ampParam.ChGain, chGain, Math.Min(cnt, ampParam.ChGain.Length));
+                ampParam.ChGain = chGain;
+            }
+            return writeAmplifierParamSmartBand(ptr, ampParam, out outStatus);
         }
         public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
@@ -2966,6 +3228,27 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadband(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadband(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadphones2(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadphones2(IntPtr handle);  
 	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -3035,6 +3318,10 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -3581,7 +3868,47 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        public byte AddResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadband(IntPtr handle)
+        {
+            removeResistCallbackHeadband(handle);
+        }
+        public byte AddSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadband(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadband(handle);
+        }
+	    public byte ReadAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamHeadphones2(ptr, out ampParamOut, out outStatus);
+        }
+        public byte WriteAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamHeadphones2(ptr, ampParam, out outStatus);
+        }
+        public byte AddSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadphones2(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadphones2(handle);
+        }
+        public byte AddResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadphones2(IntPtr handle)
+        {
+            removeResistCallbackHeadphones2(handle);
+        }
+	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
         {
             return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
         }
@@ -3774,6 +4101,56 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            var res = readAmplifierParamSmartBand(ptr, out ampParamOut, out outStatus);
+            if (outStatus.Success)
+            {
+                var cnt = getChannelsCountSensor(ptr);
+                if (ampParamOut.ChSignalUse.Length != cnt)
+                {
+                    var chSignalUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChSignalUse, chSignalUse, Math.Min(cnt, ampParamOut.ChSignalUse.Length));
+                    ampParamOut.ChSignalUse = chSignalUse;
+                }
+                if (ampParamOut.ChResistUse.Length != cnt)
+                {
+                    var chResistUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
+                    ampParamOut.ChResistUse = chResistUse;
+                }
+                if (ampParamOut.ChGain.Length != cnt)
+                {
+                    var chGain = new SensorGain[cnt];
+                    Array.Copy(ampParamOut.ChGain, chGain, Math.Min(cnt, ampParamOut.ChGain.Length));
+                    ampParamOut.ChGain = chGain;
+                }
+            }
+            return res;
+        }
+        public byte WriteAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            var cnt = SdkLibConst.SmartBandMaxChCount;
+            if (ampParam.ChSignalUse.Length != cnt)
+            {
+                var chSignalUse = new byte[cnt];
+                Array.Copy(ampParam.ChSignalUse, chSignalUse, Math.Min(cnt, ampParam.ChSignalUse.Length));
+                ampParam.ChSignalUse = chSignalUse;
+            }
+            if (ampParam.ChResistUse.Length != cnt)
+            {
+                var chResistUse = new byte[cnt];
+                Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
+                ampParam.ChResistUse = chResistUse;
+            }
+            if (ampParam.ChGain.Length != cnt)
+            {
+                var chGain = new SensorGain[cnt];
+                Array.Copy(ampParam.ChGain, chGain, Math.Min(cnt, ampParam.ChGain.Length));
+                ampParam.ChGain = chGain;
+            }
+            return writeAmplifierParamSmartBand(ptr, ampParam, out outStatus);
         }
         public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
@@ -4121,6 +4498,27 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadband(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadband(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadphones2(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadphones2(IntPtr handle);  
 	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -4190,6 +4588,10 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -4736,7 +5138,47 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        public byte AddResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadband(IntPtr handle)
+        {
+            removeResistCallbackHeadband(handle);
+        }
+        public byte AddSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadband(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadband(handle);
+        }
+	    public byte ReadAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamHeadphones2(ptr, out ampParamOut, out outStatus);
+        }
+        public byte WriteAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamHeadphones2(ptr, ampParam, out outStatus);
+        }
+        public byte AddSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadphones2(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadphones2(handle);
+        }
+        public byte AddResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadphones2(IntPtr handle)
+        {
+            removeResistCallbackHeadphones2(handle);
+        }
+	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
         {
             return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
         }
@@ -4929,6 +5371,56 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            var res = readAmplifierParamSmartBand(ptr, out ampParamOut, out outStatus);
+            if (outStatus.Success)
+            {
+                var cnt = getChannelsCountSensor(ptr);
+                if (ampParamOut.ChSignalUse.Length != cnt)
+                {
+                    var chSignalUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChSignalUse, chSignalUse, Math.Min(cnt, ampParamOut.ChSignalUse.Length));
+                    ampParamOut.ChSignalUse = chSignalUse;
+                }
+                if (ampParamOut.ChResistUse.Length != cnt)
+                {
+                    var chResistUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
+                    ampParamOut.ChResistUse = chResistUse;
+                }
+                if (ampParamOut.ChGain.Length != cnt)
+                {
+                    var chGain = new SensorGain[cnt];
+                    Array.Copy(ampParamOut.ChGain, chGain, Math.Min(cnt, ampParamOut.ChGain.Length));
+                    ampParamOut.ChGain = chGain;
+                }
+            }
+            return res;
+        }
+        public byte WriteAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            var cnt = SdkLibConst.SmartBandMaxChCount;
+            if (ampParam.ChSignalUse.Length != cnt)
+            {
+                var chSignalUse = new byte[cnt];
+                Array.Copy(ampParam.ChSignalUse, chSignalUse, Math.Min(cnt, ampParam.ChSignalUse.Length));
+                ampParam.ChSignalUse = chSignalUse;
+            }
+            if (ampParam.ChResistUse.Length != cnt)
+            {
+                var chResistUse = new byte[cnt];
+                Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
+                ampParam.ChResistUse = chResistUse;
+            }
+            if (ampParam.ChGain.Length != cnt)
+            {
+                var chGain = new SensorGain[cnt];
+                Array.Copy(ampParam.ChGain, chGain, Math.Min(cnt, ampParam.ChGain.Length));
+                ampParam.ChGain = chGain;
+            }
+            return writeAmplifierParamSmartBand(ptr, ampParam, out outStatus);
         }
         public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
@@ -5276,6 +5768,27 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadband(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadband(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadphones2(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadphones2(IntPtr handle);  
 	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -5345,6 +5858,10 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -5891,7 +6408,47 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        public byte AddResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadband(IntPtr handle)
+        {
+            removeResistCallbackHeadband(handle);
+        }
+        public byte AddSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadband(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadband(handle);
+        }
+	    public byte ReadAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamHeadphones2(ptr, out ampParamOut, out outStatus);
+        }
+        public byte WriteAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamHeadphones2(ptr, ampParam, out outStatus);
+        }
+        public byte AddSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadphones2(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadphones2(handle);
+        }
+        public byte AddResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadphones2(IntPtr handle)
+        {
+            removeResistCallbackHeadphones2(handle);
+        }
+	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
         {
             return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
         }
@@ -6084,6 +6641,56 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            var res = readAmplifierParamSmartBand(ptr, out ampParamOut, out outStatus);
+            if (outStatus.Success)
+            {
+                var cnt = getChannelsCountSensor(ptr);
+                if (ampParamOut.ChSignalUse.Length != cnt)
+                {
+                    var chSignalUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChSignalUse, chSignalUse, Math.Min(cnt, ampParamOut.ChSignalUse.Length));
+                    ampParamOut.ChSignalUse = chSignalUse;
+                }
+                if (ampParamOut.ChResistUse.Length != cnt)
+                {
+                    var chResistUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
+                    ampParamOut.ChResistUse = chResistUse;
+                }
+                if (ampParamOut.ChGain.Length != cnt)
+                {
+                    var chGain = new SensorGain[cnt];
+                    Array.Copy(ampParamOut.ChGain, chGain, Math.Min(cnt, ampParamOut.ChGain.Length));
+                    ampParamOut.ChGain = chGain;
+                }
+            }
+            return res;
+        }
+        public byte WriteAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            var cnt = SdkLibConst.SmartBandMaxChCount;
+            if (ampParam.ChSignalUse.Length != cnt)
+            {
+                var chSignalUse = new byte[cnt];
+                Array.Copy(ampParam.ChSignalUse, chSignalUse, Math.Min(cnt, ampParam.ChSignalUse.Length));
+                ampParam.ChSignalUse = chSignalUse;
+            }
+            if (ampParam.ChResistUse.Length != cnt)
+            {
+                var chResistUse = new byte[cnt];
+                Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
+                ampParam.ChResistUse = chResistUse;
+            }
+            if (ampParam.ChGain.Length != cnt)
+            {
+                var chGain = new SensorGain[cnt];
+                Array.Copy(ampParam.ChGain, chGain, Math.Min(cnt, ampParam.ChGain.Length));
+                ampParam.ChGain = chGain;
+            }
+            return writeAmplifierParamSmartBand(ptr, ampParam, out outStatus);
         }
         public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
@@ -6432,6 +7039,27 @@ namespace NeuroSDK
         private static extern byte addSignalDataCallbackBrainBit(IntPtr ptr, SignalDataCallbackBrainBitSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern void removeSignalDataCallbackBrainBit(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadband(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  addSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadband(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeResistCallbackHeadphones2(IntPtr handle);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeSignalDataCallbackHeadphones2(IntPtr handle);  
 	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -6501,6 +7129,10 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsBrainBit2(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
@@ -7047,7 +7679,47 @@ namespace NeuroSDK
         {
             removeConnectionStateCallback(handle);
         }
-        	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
+        public byte AddResistCallbackHeadband(IntPtr ptr, ResistCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadband(IntPtr handle)
+        {
+            removeResistCallbackHeadband(handle);
+        }
+        public byte AddSignalDataCallbackHeadband(IntPtr ptr, SignalDataCallbackHeadbandSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadband(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadband(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadband(handle);
+        }
+	    public byte ReadAmplifierParamHeadphones2(IntPtr ptr, out Headphones2AmplifierParam ampParamOut, out OpStatus outStatus)
+        {
+            return readAmplifierParamHeadphones2(ptr, out ampParamOut, out outStatus);
+        }
+        public byte WriteAmplifierParamHeadphones2(IntPtr ptr, Headphones2AmplifierParam ampParam, out OpStatus outStatus)
+        {
+            return writeAmplifierParamHeadphones2(ptr, ampParam, out outStatus);
+        }
+        public byte AddSignalDataCallbackHeadphones2(IntPtr ptr, SignalDataCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addSignalDataCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveSignalDataCallbackHeadphones2(IntPtr handle)
+        {
+            removeSignalDataCallbackHeadphones2(handle);
+        }
+        public byte AddResistCallbackHeadphones2(IntPtr ptr, ResistCallbackHeadphones2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addResistCallbackHeadphones2(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveResistCallbackHeadphones2(IntPtr handle)
+        {
+            removeResistCallbackHeadphones2(handle);
+        }
+	    public byte ReadSurveyIdNeuroEEG(IntPtr ptr, out uint surveyIdOut, out OpStatus outStatus)
         {
             return readSurveyIdNeuroEEG(ptr, out surveyIdOut, out outStatus);
         }
@@ -7240,6 +7912,56 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
+        {
+            var res = readAmplifierParamSmartBand(ptr, out ampParamOut, out outStatus);
+            if (outStatus.Success)
+            {
+                var cnt = getChannelsCountSensor(ptr);
+                if (ampParamOut.ChSignalUse.Length != cnt)
+                {
+                    var chSignalUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChSignalUse, chSignalUse, Math.Min(cnt, ampParamOut.ChSignalUse.Length));
+                    ampParamOut.ChSignalUse = chSignalUse;
+                }
+                if (ampParamOut.ChResistUse.Length != cnt)
+                {
+                    var chResistUse = new byte[cnt];
+                    Array.Copy(ampParamOut.ChResistUse, chResistUse, Math.Min(cnt, ampParamOut.ChResistUse.Length));
+                    ampParamOut.ChResistUse = chResistUse;
+                }
+                if (ampParamOut.ChGain.Length != cnt)
+                {
+                    var chGain = new SensorGain[cnt];
+                    Array.Copy(ampParamOut.ChGain, chGain, Math.Min(cnt, ampParamOut.ChGain.Length));
+                    ampParamOut.ChGain = chGain;
+                }
+            }
+            return res;
+        }
+        public byte WriteAmplifierParamSmartBand(IntPtr ptr, SmartBandAmplifierParamNative ampParam, out OpStatus outStatus)
+        {
+            var cnt = SdkLibConst.SmartBandMaxChCount;
+            if (ampParam.ChSignalUse.Length != cnt)
+            {
+                var chSignalUse = new byte[cnt];
+                Array.Copy(ampParam.ChSignalUse, chSignalUse, Math.Min(cnt, ampParam.ChSignalUse.Length));
+                ampParam.ChSignalUse = chSignalUse;
+            }
+            if (ampParam.ChResistUse.Length != cnt)
+            {
+                var chResistUse = new byte[cnt];
+                Array.Copy(ampParam.ChResistUse, chResistUse, Math.Min(cnt, ampParam.ChResistUse.Length));
+                ampParam.ChResistUse = chResistUse;
+            }
+            if (ampParam.ChGain.Length != cnt)
+            {
+                var chGain = new SensorGain[cnt];
+                Array.Copy(ampParam.ChGain, chGain, Math.Min(cnt, ampParam.ChGain.Length));
+                ampParam.ChGain = chGain;
+            }
+            return writeAmplifierParamSmartBand(ptr, ampParam, out outStatus);
         }
         public byte AddSignalCallbackBrainBit2(IntPtr ptr, SignalCallbackBrainBit2Sensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {

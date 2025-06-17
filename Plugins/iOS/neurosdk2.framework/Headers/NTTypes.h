@@ -24,7 +24,11 @@ typedef NS_ENUM (UInt8, NTSensorFamily) {
     NTSensorFamilyLEBrainBitBlack = 4,
 
 
+
+    NTSensorFamilyLEHeadPhones2 = 6,
  
+
+    NTSensorFamilyLEHeadband = 11,
 
     NTSensorFamilyLEEarBuds = 12,
 
@@ -77,7 +81,10 @@ typedef NS_ENUM (UInt8, NTSensorFeature)
     NTSensorFeatureFPG,
     NTSensorFeatureEnvelope,
     NTSensorFeaturePhotoStimulator,
-    NTSensorFeatureAcousticStimulator
+    NTSensorFeatureAcousticStimulator,
+    NTSensorFeatureFlashCard,
+    NTSensorFeatureLedChannels,
+    NTSensorFeatureSignalWithResist
 };
 
 typedef NS_ENUM (UInt8, NTSensorFirmwareMode){
@@ -412,6 +419,7 @@ struct Point3D {
 };
 
 @interface NTMEMSData : NSObject
+@property (nonatomic, readonly) UInt32 PackNum;
 @property (nonatomic, readonly) struct Point3D Accelerometer;
 @property (nonatomic, readonly) struct Point3D Gyroscope;
 
@@ -501,9 +509,77 @@ typedef NS_ENUM (UInt8, NTRedAmplitude) {
 @end
 
 
+@interface NTHeadbandSignalData : NSObject
+@property (nonatomic, readonly) UInt32 PackNum;
+@property (nonatomic, readonly) UInt8 Marker;
+@property (nonatomic, readonly) NSNumber*_Nonnull O1;
+@property (nonatomic, readonly) NSNumber*_Nonnull O2;
+@property (nonatomic, readonly) NSNumber*_Nonnull T3;
+@property (nonatomic, readonly) NSNumber*_Nonnull T4;
+
+- (nonnull instancetype)init NS_UNAVAILABLE;
+
+@end
+@interface NTHeadbandResistData : NSObject
+@property (nonatomic, readonly) NSNumber*_Nonnull O1;
+@property (nonatomic, readonly) NSNumber*_Nonnull O2;
+@property (nonatomic, readonly) NSNumber*_Nonnull T3;
+@property (nonatomic, readonly) NSNumber*_Nonnull T4;
+
+- (nonnull instancetype)init NS_UNAVAILABLE;
+
+@end
 
 
 
+
+
+@interface NTHeadphones2SignalData : NSObject
+
+@property (nonatomic, readonly) UInt32 PackNum;
+@property (nonatomic, readonly) UInt8 Marker;
+@property (nonatomic, readonly) NSNumber*_Nonnull Ch1;
+@property (nonatomic, readonly) NSNumber*_Nonnull Ch2;
+@property (nonatomic, readonly) NSNumber*_Nonnull Ch3;
+@property (nonatomic, readonly) NSNumber*_Nonnull Ch4;
+
+- (nonnull instancetype)init NS_UNAVAILABLE;
+
+@end
+
+@interface NTHeadphones2ResistData : NSObject
+@property (nonatomic, readonly) UInt32 PackNum;
+@property (nonatomic, readonly) NSNumber*_Nonnull Ch1;
+@property (nonatomic, readonly) NSNumber*_Nonnull Ch2;
+@property (nonatomic, readonly) NSNumber*_Nonnull Ch3;
+@property (nonatomic, readonly) NSNumber*_Nonnull Ch4;
+
+- (nonnull instancetype)init NS_UNAVAILABLE;
+
+@end
+
+@interface NTHeadphones2AmplifierParam : NSObject
+@property (nonatomic) BOOL  ChSignalUse1;
+@property (nonatomic) BOOL  ChSignalUse2;
+@property (nonatomic) BOOL  ChSignalUse3;
+@property (nonatomic) BOOL  ChSignalUse4;
+
+@property (nonatomic) BOOL  ChResistUse1;
+@property (nonatomic) BOOL  ChResistUse2;
+@property (nonatomic) BOOL  ChResistUse3;
+@property (nonatomic) BOOL  ChResistUse4;
+
+@property (nonatomic) NTSensorGain ChGain1;
+@property (nonatomic) NTSensorGain ChGain2;
+@property (nonatomic) NTSensorGain ChGain3;
+@property (nonatomic) NTSensorGain ChGain4;
+
+@property (nonatomic) NTGenCurrent Current;
+
+- (nonnull instancetype)init NS_UNAVAILABLE;
+- (nonnull instancetype)initWithChSignalUse1:(BOOL)chSignalUse1 chSignalUse2:(BOOL)chSignalUse2 chSignalUse3:(BOOL)chSignalUse3 chSignalUse4:(BOOL)chSignalUse4  chResistUse1:(BOOL)chResistUse1 chResistUse2:(BOOL)chResistUse2 chResistUse3:(BOOL)chResistUse3 chResistUse4:(BOOL)chResistUse4  chGain1:(NTSensorGain)chGain1 chGain2:(NTSensorGain)chGain2 chGain3:(NTSensorGain)chGain3 chGain4:(NTSensorGain)chGain4 current:(NTGenCurrent)current NS_DESIGNATED_INITIALIZER;
+
+@end
 
 
 typedef NS_ENUM (UInt8, NTSensorAmpMode)

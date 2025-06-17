@@ -16,7 +16,7 @@
 - (nonnull instancetype)initWithAmpParam:(NTNeuroEEGAmplifierParam*_Nonnull)ampParam;
 
 + (UInt32) calcCRC32:(NSData*_Nonnull) data;
-- (UInt8) ParseRawSignalNeuroEEG:(NSData*_Nonnull)data signalOut:(NSMutableArray<NTSignalChannelsData*>*_Nonnull)signalOut resistOut:(NSMutableArray<NTResistChannelsData*>*_Nonnull)resistOut;
+- (UInt32) ParseRawSignalNeuroEEG:(NSData*_Nonnull)data signalOut:(NSMutableArray<NTSignalChannelsData*>*_Nonnull)signalOut resistOut:(NSMutableArray<NTResistChannelsData*>*_Nonnull)resistOut;
 
 @end
 

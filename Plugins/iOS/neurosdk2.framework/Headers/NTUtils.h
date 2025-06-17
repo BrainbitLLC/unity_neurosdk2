@@ -10,9 +10,13 @@
 
 #include "NTTypes.h"
 
+#ifdef _cplusplus
 extern "C" {
-    #include "cmn_type.h"
+#endif
+#include "cmn_type.h"
+#ifdef _cplusplus
 }
+#endif
 
 @interface NTUtils : NSObject
 

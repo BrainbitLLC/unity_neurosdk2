@@ -17,6 +17,7 @@ namespace NeuroSDK
         public const int NeuroEEGMaxChCount = 24;
         public const int NeuroBAMMaxChCount = 8;
         
+        public const int SmartBandMaxChCount = 4;
         public const int BrainBit2MaxChCount = 8;
     }
 
@@ -44,8 +45,8 @@ namespace NeuroSDK
         SensorLEBrainBit = 3,
         SensorLEBrainBitBlack = 4,
         
-        
-        
+        SensorLEHeadPhones2 = 6,
+        SensorLEHeadband = 11,
         
         SensorLENeuroEEG = 14,
         
@@ -54,6 +55,7 @@ namespace NeuroSDK
         SensorLEBrainBit2 = 18,
         SensorLEBrainBitPro = 19,
         SensorLEBrainBitFlex = 20,
+        SensorLEPhotoStim = 21,
         
         
     }
@@ -96,6 +98,7 @@ namespace NeuroSDK
         FeatureAcousticStimulator,
         FeatureFlashCard,
         FeatureLedChannels,
+        FeatureSignalWithResist
     }
     /// <summary>
     /// Sensor firmware mode
@@ -512,7 +515,35 @@ namespace NeuroSDK
     public delegate void BrainBitResistDataRecived(ISensor sensor, BrainBitResistData data);
     public delegate void BrainBitSignalDataRecived(ISensor sensor, BrainBitSignalData[] data);
 
-    
+        /// <summary>
+    /// Sensor Headband Resistance Data
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct HeadbandResistData
+    {
+        public uint PackNum;
+        public double O1;
+        public double O2;
+        public double T3;
+        public double T4;
+    }
+    /// <summary>
+    /// Sensor Headband Signal Data
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct HeadbandSignalData
+    {
+        public uint PackNum;
+        public byte Marker;
+        public double O1;
+        public double O2;
+        public double T3;
+        public double T4;
+    }
+
+    public delegate void HeadbandResistDataRecived(ISensor sensor, HeadbandResistData data);
+    public delegate void HeadbandSignalDataRecived(ISensor sensor, HeadbandSignalData[] data);
+
         /// <summary>
     /// Gen Current
     /// </summary>
@@ -529,7 +560,66 @@ namespace NeuroSDK
     }
 
     
-    
+    /// <summary>
+    /// Sensor Headphones Signal Data
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Headphones2SignalData
+    {
+        public uint PackNum;
+        public byte Marker;
+        public double Ch1;
+        public double Ch2;
+        public double Ch3;
+        public double Ch4;
+    }
+    /// <summary>
+    /// Sensor Headphones Resistance Data
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Headphones2ResistData
+    {
+        public uint PackNum;
+        public double Ch1;
+        public double Ch2;
+        public double Ch3;
+        public double Ch4;
+    }
+    /// <summary>
+    /// Sensor Headphones Amplifier Parameters
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Headphones2AmplifierParam
+    {
+        [MarshalAs(UnmanagedType.I1)]
+        public bool ChSignalUse1;
+        [MarshalAs(UnmanagedType.I1)]
+        public bool ChSignalUse2;
+        [MarshalAs(UnmanagedType.I1)]
+        public bool ChSignalUse3;
+        [MarshalAs(UnmanagedType.I1)]
+        public bool ChSignalUse4;
+
+        [MarshalAs(UnmanagedType.I1)]
+        public bool ChResistUse1;
+        [MarshalAs(UnmanagedType.I1)]
+        public bool ChResistUse2;
+        [MarshalAs(UnmanagedType.I1)]
+        public bool ChResistUse3;
+        [MarshalAs(UnmanagedType.I1)]
+        public bool ChResistUse4;
+
+        public SensorGain ChGain1;
+        public SensorGain ChGain2;
+        public SensorGain ChGain3;
+        public SensorGain ChGain4;
+
+        public GenCurrent Current;
+    }
+
+    public delegate void Headphones2ResistDataRecived(ISensor sensor, Headphones2ResistData[] data);
+    public delegate void Headphones2SignalDataRecived(ISensor sensor, Headphones2SignalData[] data);
+
         /// <summary>
     /// Sensor ADC Input
     /// </summary>
@@ -853,6 +943,15 @@ namespace NeuroSDK
     
     
     
+        
+    public struct SmartBandAmplifierParam
+    {
+        public bool[] ChSignalUse;
+	    public bool[] ChResistUse;
+	    public SensorGain[] ChGain;
+	    public GenCurrent Current;
+    }
+
     
     public delegate void BrainBit2SignalDataRecived(ISensor sensor, SignalChannelsData[] data);
     public delegate void BrainBit2ResistDataRecived(ISensor sensor, ResistRefChannelsData[] data);

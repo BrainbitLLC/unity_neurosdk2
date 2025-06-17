@@ -60,6 +60,24 @@ namespace NeuroSDK
         }
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 
+        public new SensorGain Gain
+        {
+            get
+            {
+                SensorGain val;
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.ReadGainSensor(_sensorPtr, out val, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+                return val;
+            }
+            set
+            {
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.WriteGainSensor(_sensorPtr, value, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+            }
+        }
+
         public SensorSamplingFrequency SamplingFrequencyMEMS
         {
             get
@@ -172,6 +190,42 @@ namespace NeuroSDK
                 return val;
             }
         }
+        #region For models with numbers less than 3 and greater than 0
+        public SmartBandAmplifierParam AmplifierParamSmartBand
+        {
+            get
+            {
+                SmartBandAmplifierParamNative val;
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.ReadAmplifierParamSmartBand(_sensorPtr, out val, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+
+                SmartBandAmplifierParam res = new()
+                {
+                    Current = val.Current,
+                    ChGain = val.ChGain,
+                    ChSignalUse = Array.ConvertAll(val.ChSignalUse, item => item == 1),
+                    ChResistUse = Array.ConvertAll(val.ChResistUse, item => item == 1)
+                };
+                val.ChGain.CopyTo(res.ChGain, 0);
+                return res;
+            }
+            set
+            {
+                OpStatus opSt;
+                SmartBandAmplifierParamNative setter = new()
+                {
+                    Current = value.Current,
+                    ChGain = new SensorGain[value.ChGain.Length],
+                    ChSignalUse = Array.ConvertAll(value.ChSignalUse, item => item ? (byte)1 : (byte)0),
+                    ChResistUse = Array.ConvertAll(value.ChResistUse, item => item ? (byte)1 : (byte)0)
+                };
+                setter.ChGain.CopyTo(value.ChGain, 0);
+                byte error = SDKApiFactory.Inst.WriteAmplifierParamSmartBand(_sensorPtr, setter, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+            }
+        }
+        #endregion
         #region For models with numbers 3+
         public IReadOnlyList<EEGChannelInfo> SupportedChannelsBrainBit2
         {

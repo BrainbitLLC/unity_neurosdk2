@@ -1,3 +1,6 @@
+v1.0.11
+Added Headband and Headphones devices
+
 v1.0.10
 Fixed load Android lib
 
