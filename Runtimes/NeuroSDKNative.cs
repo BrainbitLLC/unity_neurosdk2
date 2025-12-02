@@ -92,8 +92,8 @@ namespace NeuroSDK
                 case SensorFamily.SensorLEBrainBitFlex:
                     return new BrainBit2Sensor(sensorPtr);
 
-                case SensorFamily.SensorLEPhotoStim:
-                    return new PhotoStimSensor(sensorPtr);
+                case SensorFamily.SensorLENeuroStim:
+                    return new NeuroStimSensor(sensorPtr);
 
                 default:
                     return new Sensor(sensorPtr);

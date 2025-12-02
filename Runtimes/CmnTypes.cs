@@ -14,7 +14,7 @@ namespace NeuroSDK
         public const int SensorSNLen = 128;
         public const int SensorChannelNameLen = 8;
         public const int FileNameMaxLen = 64;
-        public const int NeuroEEGMaxChCount = 24;
+        public const int NeuroEEGMaxChCount = 32;
         public const int NeuroBAMMaxChCount = 8;
         
         public const int SmartBandMaxChCount = 4;
@@ -55,7 +55,8 @@ namespace NeuroSDK
         SensorLEBrainBit2 = 18,
         SensorLEBrainBitPro = 19,
         SensorLEBrainBitFlex = 20,
-        SensorLEPhotoStim = 21,
+        SensorLENeuroStim = 21,
+        
         
         
     }
@@ -98,7 +99,8 @@ namespace NeuroSDK
         FeatureAcousticStimulator,
         FeatureFlashCard,
         FeatureLedChannels,
-        FeatureSignalWithResist
+        FeatureSignalWithResist,
+        FeaturePulseOximeter
     }
     /// <summary>
     /// Sensor firmware mode
@@ -149,8 +151,10 @@ namespace NeuroSDK
 	    CommandFileSystemStreamClose,
         CommandStartCalibrateSignal,
 	    CommandStopCalibrateSignal,
-        CommandPhotoStimEnable,
-	    CommandPhotoStimDisable
+        CommandModuleStimEnable,
+	    CommandModuleStimDisable,
+        CommandStartPulseOximeter,
+	    CommandStopPulseOximeter,
     }
     /// <summary>
     /// Sensor parameters
@@ -200,12 +204,20 @@ namespace NeuroSDK
 	    ParameterElectrodeState,
         ParameterChannelResistConfiguration,
         ParameterBattVoltage,
-	    ParameterPhotoStimTimeDefer,
-        ParameterPhotoStimSyncState,
-	    ParameterSensorPhotoStim,
+	    ParameterStimTimeDefer,
+		ParameterStimSyncState,
+		ParameterModuleStim,
 	    ParameterStimMode,
 	    ParameterLedChannels,
-        ParameterLedState
+        ParameterLedState,
+        ParameterPulseOximeterParamPack,
+	    ParameterPulseOximeterState,
+	    ParameterSamplingFrequencyPulseOximeter,
+	    ParameterCalibrateType,
+        ParameterSensorActiveChannels,
+        ParameterBattGauge,
+        ParameterSensorTime,
+	    ParameterStimulatorScheduler
     }
     /// <summary>
     /// Sensor parameter access
@@ -257,6 +269,7 @@ namespace NeuroSDK
 	    FrequencyHz32000,
 	    FrequencyHz48000,
 	    FrequencyHz64000,
+	    FrequencyHz50,
         FrequencyUnsupported = 0xFF
     }
     /// <summary>
@@ -820,7 +833,13 @@ namespace NeuroSDK
 	    EEGChIdA1,
 	    EEGChIdA2,
 	    EEGChIdGnd1,
-	    EEGChIdGnd2
+	    EEGChIdGnd2,
+	    EEGChIdD4,
+	    EEGChIdD5,
+	    EEGChIdD6,
+	    EEGChIdD7,
+	    EEGChIdD8,
+	    EEGChIdResp
     }
     /// <summary>
     /// EEG Channel Info
@@ -872,12 +891,13 @@ namespace NeuroSDK
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.NeuroEEGMaxChCount)]
         public SensorGain[] ChannelGain;
         [MarshalAs(UnmanagedType.I1)]
-	    public bool RespirationOn;
+	    public bool UseDiffAsRespiration;
     }
     public struct ResistChannelsData {
 	    public uint PackNum;
 	    public double A1;
 	    public double A2;
+        public double Ref;
 	    public double Bias;
 	    public double[] Values;
     }
@@ -886,6 +906,8 @@ namespace NeuroSDK
     public delegate void NeuroEEGResistDataRecived(ISensor sensor, ResistChannelsData[] data);
     public delegate void NeuroEEGSignalResistDataRecived(ISensor sensor, SignalChannelsData[] signalData, ResistChannelsData[] resistData);
     public delegate void NeuroEEGSignalRawDataRecived(ISensor sensor, byte[] data);
+
+    public delegate void BatteryGaugeStateChanged(ISensor sensor, SensorBatteryGauge battGauge);
 
         public enum SensorFSStatus : byte
     {
@@ -937,6 +959,15 @@ namespace NeuroSDK
 	    public ulong TotalSize;
 	    public ulong FreeSize;
     }
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SensorBatteryGauge {
+	    public double Level;
+	    public double Current;
+	    public double Voltage;
+	    public double Temperature;
+	    public uint Counter;
+    }
 
     public delegate void NeuroEEGFileStreamReadRecived(ISensor sensor, SensorFileData[] data);
 
@@ -972,6 +1003,19 @@ namespace NeuroSDK
     }
 
     [Serializable]
+    public enum SensorStimulMode : byte
+    {
+        StimulModeInvalid,
+	    StimulModeStopped,
+	    StimulModePendingSync,
+	    StimulModeSynchronized,
+	    StimulModeStimProgrammRuning,
+	    StimulModeError
+    }
+
+    public delegate void SensorStimulModeChanged(ISensor sensor, SensorStimulMode mode);
+
+    [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public struct StimulPhase {
         // Stimulation frequency
@@ -987,27 +1031,23 @@ namespace NeuroSDK
         // Filling frequency of the signal for acoustic stimulation
 	    public double FillingFrequency;
     }
-    public enum SensorStimulMode : byte
-    {
-        StimulModeInvalid,
-	    StimulModeStopped,
-	    StimulModePendingSync,
-	    StimulModeSynchronized,
-	    StimulModeStimProgrammRuning,
-	    StimulModeError
-    }
-
-    public delegate void SensorStimulModeChanged(ISensor sensor, SensorStimulMode mode);
 
     
     public enum SensorStimulSyncState : byte
     {
-	    StimulSyncNormal,
+	    StimulSyncNormal = 0,
 	    StimulSyncTimeOut
+    };
+    public enum SensorStimulType : byte
+    {
+	    StimulTypeAcoustic = 0,
+	    StimulTypePhoto = 1
     };
 
     public delegate void SensorStimulSyncStateChanged(ISensor sensor, SensorStimulSyncState state);
 
+    
+    
     
     #endregion
 

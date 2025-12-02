@@ -9,8 +9,9 @@ namespace NeuroSDK
         private IntPtr _this;
 
         private IntPtr _modeCallbackNeuroSmartHandle;
-        private IntPtr _modeCallbackPhotoStimHandle;
-        private IntPtr _syncStateCallbackPhotoStimHandle;
+        private IntPtr _modeCallbackNeuroStimHandle;
+        private IntPtr _batteryGaugeStateCallbackSensorHandle;
+        private IntPtr _syncStateCallbackNeuroStimHandle;
         private IntPtr _signalCallbackNeuroEEGSensorHandle;
         private IntPtr _resistCallbackNeuroEEGSensorHandle;
         private IntPtr _signalResistCallbackNeuroEEGSensorHandle;
@@ -18,24 +19,28 @@ namespace NeuroSDK
         private IntPtr _fileStreamReadCallbackNeuroEEGSensorHandle;
 
         private readonly AmpModeCallbackSensor _modeCallbackNeuroSmart;
-        private readonly StimulModeCallbackSensor _modeCallbackPhotoStim;
-        private readonly StimulSyncStateCallbackSensor _syncStateCallbackPhotoStim;
+        private readonly StimulModeCallbackSensor _modeCallbackNeuroStim;
+        private readonly BatteryGaugeStateCallbackSensor _batteryGaugeStateCallbackSensor;
+        private readonly StimulSyncStateCallbackSensor _syncStateCallbackNeuroStim;
         private readonly SignalCallbackNeuroEEGSensor _signalCallbackNeuroEEGSensor;
         private readonly ResistCallbackNeuroEEGSensor _resistCallbackNeuroEEGSensor;
         private readonly SignalResistCallbackNeuroEEGSensor _signalResistCallbackNeuroEEGSensor;
         private readonly SignalRawCallbackNeuroEEGSensor _signalRawCallbackNeuroEEGSensor;
         private readonly FileStreamReadCallbackNeuroEEGSensor _fileStreamReadCallbackNeuroEEGSensor;
 
+
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+        private NeuroStimSensor? _moduleStim;
+
         public event SensorAmpModeChanged? EventSensorAmpModeChanged;
         public event SensorStimulModeChanged? EventSensorStimModeChanged;
-        public event SensorStimulSyncStateChanged? EventSensorPhotoStimSyncStateChanged;
+        public event BatteryGaugeStateChanged? EventBatteryGaugeStateChanged;
+        public event SensorStimulSyncStateChanged? EventSensorNeuroStimSyncStateChanged;
         public event NeuroEEGSignalDataRecived? EventNeuroEEGSignalDataRecived;
         public event NeuroEEGResistDataRecived? EventNeuroEEGResistDataRecived;
         public event NeuroEEGSignalResistDataRecived? EventNeuroEEGSignalResistDataRecived;
         public event NeuroEEGSignalRawDataRecived? EventNeuroEEGSignalRawDataRecived;
         public event NeuroEEGFileStreamReadRecived? EventNeuroEEGFileStreamReadRecived;
-
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 
         internal NeuroEEGSensor(IntPtr sensorPtr) : base(sensorPtr)
@@ -69,16 +74,20 @@ namespace NeuroSDK
             error = SDKApiFactory.Inst.AddFileStreamReadCallbackNeuroEEG(_sensorPtr, _fileStreamReadCallbackNeuroEEGSensor, out _fileStreamReadCallbackNeuroEEGSensorHandle, _this, out opSt);
             SDKApiFactory.ThrowIfError(opSt, error);
 
-            _modeCallbackPhotoStim = StimModeCallbackSensor;
-            _syncStateCallbackPhotoStim = PhotoStimSyncStateCallbackSensor;
-            if (IsSupportedFeature(SensorFeature.FeaturePhotoStimulator))
+            _modeCallbackNeuroStim = StimModeCallbackSensor;
+            _syncStateCallbackNeuroStim = NeuroStimSyncStateCallbackSensor;
+            if (IsSupportedFeature(SensorFeature.FeaturePhotoStimulator) || IsSupportedFeature(SensorFeature.FeatureAcousticStimulator))
             {
-                error = SDKApiFactory.Inst.AddStimModeCallback(_sensorPtr, _modeCallbackPhotoStim, out _modeCallbackPhotoStimHandle, _this, out opSt);
+                error = SDKApiFactory.Inst.AddStimModeCallback(_sensorPtr, _modeCallbackNeuroStim, out _modeCallbackNeuroStimHandle, _this, out opSt);
                 SDKApiFactory.ThrowIfError(opSt, error);
 
-                error = SDKApiFactory.Inst.AddPhotoStimSyncStateCallback(_sensorPtr, _syncStateCallbackPhotoStim, out _syncStateCallbackPhotoStimHandle, _this, out opSt);
+                error = SDKApiFactory.Inst.AddNeuroStimSyncStateCallback(_sensorPtr, _syncStateCallbackNeuroStim, out _syncStateCallbackNeuroStimHandle, _this, out opSt);
                 SDKApiFactory.ThrowIfError(opSt, error);
             }
+
+            _batteryGaugeStateCallbackSensor = BatteryGaugeStateCallbackSensor;
+            error = SDKApiFactory.Inst.AddBatteryGaugeStateCallback(_sensorPtr, _batteryGaugeStateCallbackSensor, out _batteryGaugeStateCallbackSensorHandle, _this, out opSt);
+            SDKApiFactory.ThrowIfError(opSt, error);
         }
 
         public uint SurveyId
@@ -162,7 +171,7 @@ namespace NeuroSDK
                     ReferentMode = val.ReferentMode,
                     ChannelMode = new EEGChannelMode[val.ChannelMode.Length],
                     ChannelGain = new SensorGain[val.ChannelGain.Length],
-                    RespirationOn = val.RespirationOn == 1,
+                    UseDiffAsRespiration = val.UseDiffAsRespiration == 1,
                 };
                 val.ChannelMode.CopyTo(res.ChannelMode, 0);
                 val.ChannelGain.CopyTo(res.ChannelGain, 0);
@@ -178,7 +187,7 @@ namespace NeuroSDK
                     ReferentMode = value.ReferentMode,
                     ChannelMode = new EEGChannelMode[value.ChannelMode.Length],
                     ChannelGain = new SensorGain[value.ChannelGain.Length],
-                    RespirationOn = value.RespirationOn ? (byte)1 : (byte)0,
+                    UseDiffAsRespiration = value.UseDiffAsRespiration ? (byte)1 : (byte)0,
                 };
                 value.ChannelMode.CopyTo(setter.ChannelMode, 0);
                 value.ChannelGain.CopyTo(setter.ChannelGain, 0);
@@ -210,13 +219,13 @@ namespace NeuroSDK
                 return val;
             }
         }
-        public SensorStimulSyncState PhotoStimSyncState
+        public SensorStimulSyncState NeuroStimSyncState
         {
             get
             {
                 SensorStimulSyncState val;
                 OpStatus opSt;
-                byte error = SDKApiFactory.Inst.ReadPhotoStimSyncState(_sensorPtr, out val, out opSt);
+                byte error = SDKApiFactory.Inst.ReadNeuroStimSyncState(_sensorPtr, out val, out opSt);
                 SDKApiFactory.ThrowIfError(opSt, error);
                 return val;
             }
@@ -240,20 +249,81 @@ namespace NeuroSDK
                 SDKApiFactory.ThrowIfError(opSt, error);
             }
         }
-        public double PhotoStimTimeDefer
+        public double NeuroStimTimeDefer
         {
             get
             {
                 double val;
                 OpStatus opSt;
-                byte error = SDKApiFactory.Inst.ReadPhotoStimTimeDefer(_sensorPtr, out val, out opSt);
+                byte error = SDKApiFactory.Inst.ReadNeuroStimTimeDefer(_sensorPtr, out val, out opSt);
                 SDKApiFactory.ThrowIfError(opSt, error);
                 return val;
             }
             set
             {
                 OpStatus opSt;
-                byte error = SDKApiFactory.Inst.WritePhotoStimTimeDefer(_sensorPtr, value, out opSt);
+                byte error = SDKApiFactory.Inst.WriteNeuroStimTimeDefer(_sensorPtr, value, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+            }
+        }
+#pragma warning disable CS8632
+        public NeuroStimSensor? ModuleStim
+        {
+            get => _moduleStim;
+            set
+            {
+                if (_moduleStim == value) return;
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.WriteModuleStimNeuroEEG(_sensorPtr, value == null ? IntPtr.Zero : value._sensorPtr, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+                _moduleStim = value;
+            }
+        }
+#pragma warning restore CS8632
+        public SensorBatteryGauge BatteryGauge
+        {
+            get
+            {
+                SensorBatteryGauge val;
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.ReadBatteryGaugeState(_sensorPtr, out val, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+                return val;
+            }
+        }
+        public double MinBrightnessPrcLed
+        {
+            get
+            {
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.ReadLedStateNeuroEEG(_sensorPtr, out var minBrightnessPrcOut, out var maxBrightnessPrcOut, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+                return minBrightnessPrcOut;
+            }
+            set
+            {
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.ReadLedStateNeuroEEG(_sensorPtr, out var minBrightnessPrcOut, out var maxBrightnessPrcOut, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+                error = SDKApiFactory.Inst.WriteLedStateNeuroEEG(_sensorPtr, value, maxBrightnessPrcOut, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+            }
+        }
+        public double MaxBrightnessPrcLed
+        {
+            get
+            {
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.ReadLedStateNeuroEEG(_sensorPtr, out var minBrightnessPrcOut, out var maxBrightnessPrcOut, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+                return maxBrightnessPrcOut;
+            }
+            set
+            {
+                OpStatus opSt;
+                byte error = SDKApiFactory.Inst.ReadLedStateNeuroEEG(_sensorPtr, out var minBrightnessPrcOut, out var maxBrightnessPrcOut, out opSt);
+                SDKApiFactory.ThrowIfError(opSt, error);
+                error = SDKApiFactory.Inst.WriteLedStateNeuroEEG(_sensorPtr, minBrightnessPrcOut, value, out opSt);
                 SDKApiFactory.ThrowIfError(opSt, error);
             }
         }
@@ -350,10 +420,10 @@ namespace NeuroSDK
                 ReferentMode = ampParam.ReferentMode,
                 ChannelMode = new EEGChannelMode[ampParam.ChannelMode.Length],
                 ChannelGain = new SensorGain[ampParam.ChannelGain.Length],
-                RespirationOn = ampParam.RespirationOn ? (byte)1 : (byte)0,
+                UseDiffAsRespiration = ampParam.UseDiffAsRespiration ? (byte)1 : (byte)0,
             };
             ampParam.ChannelMode.CopyTo(setter.ChannelMode, 0);
-            setter.ChannelGain.CopyTo(setter.ChannelGain, 0);
+            ampParam.ChannelGain.CopyTo(setter.ChannelGain, 0);
             byte error = SDKApiFactory.Inst.CreateSignalProcessParamNeuroEEG(setter, out val, out opSt);
             SDKApiFactory.ThrowIfError(opSt, error);
             return val;
@@ -376,8 +446,9 @@ namespace NeuroSDK
             if (!_disposed)
             {
                 SDKApiFactory.Inst.RemoveAmpModeCallback(_modeCallbackNeuroSmartHandle);
-                SDKApiFactory.Inst.RemoveStimModeCallback(_modeCallbackPhotoStimHandle);
-                SDKApiFactory.Inst.RemovePhotoStimSyncStateCallback(_syncStateCallbackPhotoStimHandle);
+                SDKApiFactory.Inst.RemoveStimModeCallback(_modeCallbackNeuroStimHandle);
+                SDKApiFactory.Inst.RemoveBatteryGaugeStateCallback(_batteryGaugeStateCallbackSensorHandle);
+                SDKApiFactory.Inst.RemoveNeuroStimSyncStateCallback(_syncStateCallbackNeuroStimHandle);
                 SDKApiFactory.Inst.RemoveSignalCallbackNeuroEEG(_signalCallbackNeuroEEGSensorHandle);
                 SDKApiFactory.Inst.RemoveResistCallbackNeuroEEG(_resistCallbackNeuroEEGSensorHandle);
                 SDKApiFactory.Inst.RemoveSignalResistCallbackNeuroEEG(_signalResistCallbackNeuroEEGSensorHandle);
@@ -415,10 +486,10 @@ namespace NeuroSDK
             sensor?.EventSensorStimModeChanged?.Invoke(sensor, mode);
         }
         [AOT.MonoPInvokeCallback(typeof(StimulSyncStateCallbackSensor))]
-        private static void PhotoStimSyncStateCallbackSensor(IntPtr ptr, SensorStimulSyncState state, IntPtr userData)
+        private static void NeuroStimSyncStateCallbackSensor(IntPtr ptr, SensorStimulSyncState state, IntPtr userData)
         {
             var sensor = SDKSensor(userData);
-            sensor?.EventSensorPhotoStimSyncStateChanged?.Invoke(sensor, state);
+            sensor?.EventSensorNeuroStimSyncStateChanged?.Invoke(sensor, state);
         }
         [AOT.MonoPInvokeCallback(typeof(SignalCallbackNeuroEEGSensor))]
         private static void SignalCallbackNeuroEEGSensor(IntPtr ptr, SignalChannelsDataNative[] dataArray, int dataSize, IntPtr userData)
@@ -447,6 +518,7 @@ namespace NeuroSDK
                 rxData[i].PackNum = dataArray[i].PackNum;
                 rxData[i].A1 = dataArray[i].A1;
                 rxData[i].A2 = dataArray[i].A2;
+                rxData[i].Ref = dataArray[i].Ref;
                 rxData[i].Bias = dataArray[i].Bias;
                 rxData[i].Values = new double[dataArray[i].SzValues];
                 Marshal.Copy(dataArray[i].Values, rxData[i].Values, 0, rxData[i].Values.Length);
@@ -478,6 +550,7 @@ namespace NeuroSDK
                     rxResistData[i].PackNum = resistData[i].PackNum;
                     rxResistData[i].A1 = resistData[i].A1;
                     rxResistData[i].A2 = resistData[i].A2;
+                    rxResistData[i].Ref = resistData[i].Ref;
                     rxResistData[i].Bias = resistData[i].Bias;
                     rxResistData[i].Values = new double[resistData[i].SzValues];
                     Marshal.Copy(resistData[i].Values, rxResistData[i].Values, 0, rxResistData[i].Values.Length);
@@ -505,6 +578,12 @@ namespace NeuroSDK
                 Marshal.Copy(dataArray[i].Data, rxData[i].Data, 0, rxData[i].Data.Length);
             }
             sensor?.EventNeuroEEGFileStreamReadRecived?.Invoke(sensor, rxData);
+        }
+        [AOT.MonoPInvokeCallback(typeof(BatteryGaugeStateCallbackSensor))]
+        private static void BatteryGaugeStateCallbackSensor(IntPtr ptr, SensorBatteryGauge battGauge, IntPtr userData)
+        {
+            var sensor = SDKSensor(userData);
+            sensor?.EventBatteryGaugeStateChanged?.Invoke(sensor, battGauge);
         }
     }
 }

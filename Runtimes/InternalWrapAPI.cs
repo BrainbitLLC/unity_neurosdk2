@@ -46,6 +46,7 @@ namespace NeuroSDK
         public uint PackNum;
         public double A1;
         public double A2;
+        public double Ref;
         public double Bias;
         public uint SzValues;
         public IntPtr Values;
@@ -114,14 +115,16 @@ namespace NeuroSDK
     {
         [MarshalAs(UnmanagedType.I1)]
         public byte ReferentResistMesureAllow;
+        [MarshalAs(UnmanagedType.U1)]
         public SensorSamplingFrequency Frequency;
+        [MarshalAs(UnmanagedType.U1)]
         public EEGRefMode ReferentMode;
+        [MarshalAs(UnmanagedType.I1)]
+        public byte UseDiffAsRespiration;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.NeuroEEGMaxChCount)]
         public EEGChannelMode[] ChannelMode;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = SdkLibConst.NeuroEEGMaxChCount)]
         public SensorGain[] ChannelGain;
-        [MarshalAs(UnmanagedType.I1)]
-        public byte RespirationOn;
     }
 
 
@@ -188,6 +191,8 @@ namespace NeuroSDK
  
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void FileStreamReadCallbackNeuroEEGSensor(IntPtr ptr, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] SensorFileDataNative[] dataArray, [In] int dataSize, IntPtr userData);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void BatteryGaugeStateCallbackSensor(IntPtr ptr, SensorBatteryGauge battGauge, IntPtr userData); 
 
 
 
@@ -204,6 +209,7 @@ namespace NeuroSDK
  
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void StimulSyncStateCallbackSensor(IntPtr ptr, SensorStimulSyncState state, IntPtr userData);
+
 
 
     internal interface ISDKApi
@@ -277,20 +283,18 @@ namespace NeuroSDK
     	byte AddFPGDataCallback(IntPtr ptr, FPGDataCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         void RemoveFPGDataCallback(IntPtr handle);
 	    byte WriteSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
-	    byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
-
         byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus);
         byte WriteStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, out OpStatus outStatus);
-
+	    byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
 	    byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         void RemoveStimModeCallback(IntPtr handle);
-	    byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
+	    byte ReadNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
 
-        byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
-        byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+        byte ReadNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+        byte WriteNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
 
-	    byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
-        void RemovePhotoStimSyncStateCallback(IntPtr handle);
+	    byte AddNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveNeuroStimSyncStateCallback(IntPtr handle);
         byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus);
 
 
@@ -381,6 +385,7 @@ namespace NeuroSDK
 
         // -----===== NeuroEEG =====-----
         byte ReadSupportedChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus);
+        byte ReadActiveChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus);
         byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
         byte ReadFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
         byte ReadFileInfoNeuroEEG(IntPtr ptr, string fileName, out SensorFileInfo fileInfoOut, out OpStatus outStatus);
@@ -392,8 +397,11 @@ namespace NeuroSDK
         byte ReadFileCRC32NeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out uint crc32Out, out OpStatus outStatus);
         byte FileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
         byte FileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
-        IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr);
-	    byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+
+        IntPtr ReadModuleStimNeuroEEG(IntPtr ptr);
+	    byte WriteModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus);
+	    byte ReadCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus);
+	    byte WriteCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus);
 
         byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
         void RemoveFileStreamReadCallbackNeuroEEG(IntPtr handle);
@@ -401,6 +409,13 @@ namespace NeuroSDK
         byte CreateSignalProcessParamNeuroEEG(NeuroEEGAmplifierParamNative ampParam, out IntPtr paramOut, out OpStatus outStatus);
         void RemoveSignalProcessParamNeuroEEG(IntPtr param);
         byte ParseRawSignalNeuroEEG(byte[] data, out uint szDataReadyOut, IntPtr processParam, out SignalChannelsData[] signalOut, out ResistChannelsData[] resistOut, out OpStatus outStatus);
+
+        byte ReadLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus);
+        byte WriteLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus);
+
+        byte ReadBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus);
+        byte AddBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        void RemoveBatteryGaugeStateCallback(IntPtr handle);
 
 
 
@@ -419,6 +434,7 @@ namespace NeuroSDK
 
 	    byte ReadAmplifierParamBrainBit2(IntPtr ptr, out BrainBit2AmplifierParamNative ampParamOut, out OpStatus outStatus);
 	    byte WriteAmplifierParamBrainBit2(IntPtr ptr, BrainBit2AmplifierParamNative ampParam, out OpStatus outStatus);
+
 
 
     }
@@ -556,34 +572,32 @@ namespace NeuroSDK
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
-    
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
 
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
 	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
 
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeNeuroStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern void removeStimModeCallback(IntPtr handle);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
-	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -739,6 +753,8 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readActiveChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
@@ -760,10 +776,15 @@ namespace NeuroSDK
         private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        private static extern IntPtr readModuleStimNeuroEEG(IntPtr ptr);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+	    private static extern byte writeModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus);
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -777,6 +798,18 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryGaugeStateCallback(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -1235,11 +1268,6 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
-        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
-        {
-            return readStimMode(ptr, out modeOut, out outStatus);
-        }
-
         public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
         {
             int sz = getMaxStimulPhasesCountSensor(ptr);
@@ -1256,36 +1284,31 @@ namespace NeuroSDK
         {
             return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
         }
-
-        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
         {
-            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return readStimMode(ptr, out modeOut, out outStatus);
         }
-        public void RemoveStimModeCallback(IntPtr handle)
+        public byte ReadNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
         {
-            removeStimModeCallback(handle);
-        }
-        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
-        {
-            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+            return readNeuroStimSyncState(ptr, out stateOut, out outStatus);
         }
 
-        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        public byte ReadNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
         {
-            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+            return readNeuroStimTimeDefer(ptr, out timeOut, out outStatus);
         }
-        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        public byte WriteNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
         {
-            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+            return writeNeuroStimTimeDefer(ptr, time, out outStatus);
         }
 
-        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte AddNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
-            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return addNeuroStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
         }
-        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        public void RemoveNeuroStimSyncStateCallback(IntPtr handle)
         {
-            removePhotoStimSyncStateCallback(handle);
+            removeNeuroStimSyncStateCallback(handle);
         }
         public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
         {
@@ -1299,6 +1322,14 @@ namespace NeuroSDK
                 channelsOut = chs;
             }
             return res;
+        }
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
         }
 
 
@@ -1437,6 +1468,19 @@ namespace NeuroSDK
             }
             return res;
         }
+        public byte ReadActiveChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readActiveChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
         public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
         {
             return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
@@ -1491,13 +1535,22 @@ namespace NeuroSDK
         {
             return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
         }
-        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+
+        public IntPtr ReadModuleStimNeuroEEG(IntPtr ptr)
         {
-            return readPhotoStimNeuroEEG(ptr);
+            return readModuleStimNeuroEEG(ptr);
         }
-	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+	    public byte WriteModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus)
         {
-            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+            return writeModuleStimNeuroEEG(ptr, ptrNeuroStim, out outStatus);
+        }
+	    public byte ReadCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus)
+        {
+            return readCalibrateSignalType(ptr, out st, out outStatus);
+        }
+	    public byte WriteCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus)
+        {
+            return writeCalibrateSignalType(ptr, st, out outStatus);
         }
 
         public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -1560,6 +1613,28 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        
+        public byte ReadLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus)
+        {
+            return readLedStateNeuroEEG(ptr, out minBrightnessPrcOut, out maxBrightnessPrcOut, out outStatus);
+        }
+        public byte WriteLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus)
+        {
+            return writeLedStateNeuroEEG(ptr, minBrightnessPrc, maxBrightnessPrc, out outStatus);
+        }
+
+        public byte ReadBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus)
+        {
+            return readBatteryGaugeState(ptr, out batteryGaugeOut, out outStatus);
+        }
+        public byte AddBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryGaugeStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryGaugeStateCallback(IntPtr handle)
+        {
+            removeBatteryGaugeStateCallback(handle);
         }
         public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
@@ -1826,34 +1901,32 @@ namespace NeuroSDK
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
-    
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
 
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
 	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
 
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeNeuroStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern void removeStimModeCallback(IntPtr handle);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
-	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -2009,6 +2082,8 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readActiveChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
@@ -2030,10 +2105,15 @@ namespace NeuroSDK
         private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        private static extern IntPtr readModuleStimNeuroEEG(IntPtr ptr);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+	    private static extern byte writeModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus);
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -2047,6 +2127,18 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryGaugeStateCallback(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -2505,11 +2597,6 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
-        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
-        {
-            return readStimMode(ptr, out modeOut, out outStatus);
-        }
-
         public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
         {
             int sz = getMaxStimulPhasesCountSensor(ptr);
@@ -2526,36 +2613,31 @@ namespace NeuroSDK
         {
             return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
         }
-
-        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
         {
-            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return readStimMode(ptr, out modeOut, out outStatus);
         }
-        public void RemoveStimModeCallback(IntPtr handle)
+        public byte ReadNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
         {
-            removeStimModeCallback(handle);
-        }
-        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
-        {
-            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+            return readNeuroStimSyncState(ptr, out stateOut, out outStatus);
         }
 
-        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        public byte ReadNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
         {
-            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+            return readNeuroStimTimeDefer(ptr, out timeOut, out outStatus);
         }
-        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        public byte WriteNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
         {
-            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+            return writeNeuroStimTimeDefer(ptr, time, out outStatus);
         }
 
-        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte AddNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
-            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return addNeuroStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
         }
-        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        public void RemoveNeuroStimSyncStateCallback(IntPtr handle)
         {
-            removePhotoStimSyncStateCallback(handle);
+            removeNeuroStimSyncStateCallback(handle);
         }
         public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
         {
@@ -2569,6 +2651,14 @@ namespace NeuroSDK
                 channelsOut = chs;
             }
             return res;
+        }
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
         }
 
 
@@ -2707,6 +2797,19 @@ namespace NeuroSDK
             }
             return res;
         }
+        public byte ReadActiveChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readActiveChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
         public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
         {
             return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
@@ -2761,13 +2864,22 @@ namespace NeuroSDK
         {
             return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
         }
-        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+
+        public IntPtr ReadModuleStimNeuroEEG(IntPtr ptr)
         {
-            return readPhotoStimNeuroEEG(ptr);
+            return readModuleStimNeuroEEG(ptr);
         }
-	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+	    public byte WriteModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus)
         {
-            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+            return writeModuleStimNeuroEEG(ptr, ptrNeuroStim, out outStatus);
+        }
+	    public byte ReadCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus)
+        {
+            return readCalibrateSignalType(ptr, out st, out outStatus);
+        }
+	    public byte WriteCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus)
+        {
+            return writeCalibrateSignalType(ptr, st, out outStatus);
         }
 
         public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -2830,6 +2942,28 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        
+        public byte ReadLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus)
+        {
+            return readLedStateNeuroEEG(ptr, out minBrightnessPrcOut, out maxBrightnessPrcOut, out outStatus);
+        }
+        public byte WriteLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus)
+        {
+            return writeLedStateNeuroEEG(ptr, minBrightnessPrc, maxBrightnessPrc, out outStatus);
+        }
+
+        public byte ReadBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus)
+        {
+            return readBatteryGaugeState(ptr, out batteryGaugeOut, out outStatus);
+        }
+        public byte AddBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryGaugeStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryGaugeStateCallback(IntPtr handle)
+        {
+            removeBatteryGaugeStateCallback(handle);
         }
         public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
@@ -3097,34 +3231,32 @@ namespace NeuroSDK
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
-    
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
 
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
 	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
 
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeNeuroStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern void removeStimModeCallback(IntPtr handle);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
-	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -3280,6 +3412,8 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readActiveChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
@@ -3301,10 +3435,15 @@ namespace NeuroSDK
         private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        private static extern IntPtr readModuleStimNeuroEEG(IntPtr ptr);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+	    private static extern byte writeModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus);
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -3318,6 +3457,18 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryGaugeStateCallback(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -3776,11 +3927,6 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
-        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
-        {
-            return readStimMode(ptr, out modeOut, out outStatus);
-        }
-
         public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
         {
             int sz = getMaxStimulPhasesCountSensor(ptr);
@@ -3797,36 +3943,31 @@ namespace NeuroSDK
         {
             return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
         }
-
-        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
         {
-            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return readStimMode(ptr, out modeOut, out outStatus);
         }
-        public void RemoveStimModeCallback(IntPtr handle)
+        public byte ReadNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
         {
-            removeStimModeCallback(handle);
-        }
-        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
-        {
-            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+            return readNeuroStimSyncState(ptr, out stateOut, out outStatus);
         }
 
-        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        public byte ReadNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
         {
-            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+            return readNeuroStimTimeDefer(ptr, out timeOut, out outStatus);
         }
-        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        public byte WriteNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
         {
-            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+            return writeNeuroStimTimeDefer(ptr, time, out outStatus);
         }
 
-        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte AddNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
-            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return addNeuroStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
         }
-        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        public void RemoveNeuroStimSyncStateCallback(IntPtr handle)
         {
-            removePhotoStimSyncStateCallback(handle);
+            removeNeuroStimSyncStateCallback(handle);
         }
         public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
         {
@@ -3840,6 +3981,14 @@ namespace NeuroSDK
                 channelsOut = chs;
             }
             return res;
+        }
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
         }
 
 
@@ -3978,6 +4127,19 @@ namespace NeuroSDK
             }
             return res;
         }
+        public byte ReadActiveChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readActiveChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
         public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
         {
             return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
@@ -4032,13 +4194,22 @@ namespace NeuroSDK
         {
             return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
         }
-        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+
+        public IntPtr ReadModuleStimNeuroEEG(IntPtr ptr)
         {
-            return readPhotoStimNeuroEEG(ptr);
+            return readModuleStimNeuroEEG(ptr);
         }
-	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+	    public byte WriteModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus)
         {
-            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+            return writeModuleStimNeuroEEG(ptr, ptrNeuroStim, out outStatus);
+        }
+	    public byte ReadCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus)
+        {
+            return readCalibrateSignalType(ptr, out st, out outStatus);
+        }
+	    public byte WriteCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus)
+        {
+            return writeCalibrateSignalType(ptr, st, out outStatus);
         }
 
         public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -4101,6 +4272,28 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        
+        public byte ReadLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus)
+        {
+            return readLedStateNeuroEEG(ptr, out minBrightnessPrcOut, out maxBrightnessPrcOut, out outStatus);
+        }
+        public byte WriteLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus)
+        {
+            return writeLedStateNeuroEEG(ptr, minBrightnessPrc, maxBrightnessPrc, out outStatus);
+        }
+
+        public byte ReadBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus)
+        {
+            return readBatteryGaugeState(ptr, out batteryGaugeOut, out outStatus);
+        }
+        public byte AddBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryGaugeStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryGaugeStateCallback(IntPtr handle)
+        {
+            removeBatteryGaugeStateCallback(handle);
         }
         public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
@@ -4367,34 +4560,32 @@ namespace NeuroSDK
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
-    
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
 
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
 	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
 
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeNeuroStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern void removeStimModeCallback(IntPtr handle);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
-	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -4550,6 +4741,8 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readActiveChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
@@ -4571,10 +4764,15 @@ namespace NeuroSDK
         private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        private static extern IntPtr readModuleStimNeuroEEG(IntPtr ptr);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+	    private static extern byte writeModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus);
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -4588,6 +4786,18 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryGaugeStateCallback(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -5046,11 +5256,6 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
-        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
-        {
-            return readStimMode(ptr, out modeOut, out outStatus);
-        }
-
         public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
         {
             int sz = getMaxStimulPhasesCountSensor(ptr);
@@ -5067,36 +5272,31 @@ namespace NeuroSDK
         {
             return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
         }
-
-        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
         {
-            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return readStimMode(ptr, out modeOut, out outStatus);
         }
-        public void RemoveStimModeCallback(IntPtr handle)
+        public byte ReadNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
         {
-            removeStimModeCallback(handle);
-        }
-        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
-        {
-            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+            return readNeuroStimSyncState(ptr, out stateOut, out outStatus);
         }
 
-        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        public byte ReadNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
         {
-            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+            return readNeuroStimTimeDefer(ptr, out timeOut, out outStatus);
         }
-        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        public byte WriteNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
         {
-            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+            return writeNeuroStimTimeDefer(ptr, time, out outStatus);
         }
 
-        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte AddNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
-            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return addNeuroStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
         }
-        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        public void RemoveNeuroStimSyncStateCallback(IntPtr handle)
         {
-            removePhotoStimSyncStateCallback(handle);
+            removeNeuroStimSyncStateCallback(handle);
         }
         public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
         {
@@ -5110,6 +5310,14 @@ namespace NeuroSDK
                 channelsOut = chs;
             }
             return res;
+        }
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
         }
 
 
@@ -5248,6 +5456,19 @@ namespace NeuroSDK
             }
             return res;
         }
+        public byte ReadActiveChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readActiveChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
         public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
         {
             return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
@@ -5302,13 +5523,22 @@ namespace NeuroSDK
         {
             return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
         }
-        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+
+        public IntPtr ReadModuleStimNeuroEEG(IntPtr ptr)
         {
-            return readPhotoStimNeuroEEG(ptr);
+            return readModuleStimNeuroEEG(ptr);
         }
-	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+	    public byte WriteModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus)
         {
-            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+            return writeModuleStimNeuroEEG(ptr, ptrNeuroStim, out outStatus);
+        }
+	    public byte ReadCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus)
+        {
+            return readCalibrateSignalType(ptr, out st, out outStatus);
+        }
+	    public byte WriteCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus)
+        {
+            return writeCalibrateSignalType(ptr, st, out outStatus);
         }
 
         public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -5371,6 +5601,28 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        
+        public byte ReadLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus)
+        {
+            return readLedStateNeuroEEG(ptr, out minBrightnessPrcOut, out maxBrightnessPrcOut, out outStatus);
+        }
+        public byte WriteLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus)
+        {
+            return writeLedStateNeuroEEG(ptr, minBrightnessPrc, maxBrightnessPrc, out outStatus);
+        }
+
+        public byte ReadBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus)
+        {
+            return readBatteryGaugeState(ptr, out batteryGaugeOut, out outStatus);
+        }
+        public byte AddBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryGaugeStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryGaugeStateCallback(IntPtr handle)
+        {
+            removeBatteryGaugeStateCallback(handle);
         }
         public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
@@ -5637,34 +5889,32 @@ namespace NeuroSDK
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
-    
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
 
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
 	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
 
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeNeuroStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern void removeStimModeCallback(IntPtr handle);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
-	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -5820,6 +6070,8 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readActiveChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
@@ -5841,10 +6093,15 @@ namespace NeuroSDK
         private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        private static extern IntPtr readModuleStimNeuroEEG(IntPtr ptr);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+	    private static extern byte writeModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus);
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -5858,6 +6115,18 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryGaugeStateCallback(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -6316,11 +6585,6 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
-        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
-        {
-            return readStimMode(ptr, out modeOut, out outStatus);
-        }
-
         public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
         {
             int sz = getMaxStimulPhasesCountSensor(ptr);
@@ -6337,36 +6601,31 @@ namespace NeuroSDK
         {
             return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
         }
-
-        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
         {
-            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return readStimMode(ptr, out modeOut, out outStatus);
         }
-        public void RemoveStimModeCallback(IntPtr handle)
+        public byte ReadNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
         {
-            removeStimModeCallback(handle);
-        }
-        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
-        {
-            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+            return readNeuroStimSyncState(ptr, out stateOut, out outStatus);
         }
 
-        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        public byte ReadNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
         {
-            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+            return readNeuroStimTimeDefer(ptr, out timeOut, out outStatus);
         }
-        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        public byte WriteNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
         {
-            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+            return writeNeuroStimTimeDefer(ptr, time, out outStatus);
         }
 
-        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte AddNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
-            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return addNeuroStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
         }
-        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        public void RemoveNeuroStimSyncStateCallback(IntPtr handle)
         {
-            removePhotoStimSyncStateCallback(handle);
+            removeNeuroStimSyncStateCallback(handle);
         }
         public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
         {
@@ -6380,6 +6639,14 @@ namespace NeuroSDK
                 channelsOut = chs;
             }
             return res;
+        }
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
         }
 
 
@@ -6518,6 +6785,19 @@ namespace NeuroSDK
             }
             return res;
         }
+        public byte ReadActiveChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readActiveChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
         public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
         {
             return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
@@ -6572,13 +6852,22 @@ namespace NeuroSDK
         {
             return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
         }
-        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+
+        public IntPtr ReadModuleStimNeuroEEG(IntPtr ptr)
         {
-            return readPhotoStimNeuroEEG(ptr);
+            return readModuleStimNeuroEEG(ptr);
         }
-	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+	    public byte WriteModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus)
         {
-            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+            return writeModuleStimNeuroEEG(ptr, ptrNeuroStim, out outStatus);
+        }
+	    public byte ReadCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus)
+        {
+            return readCalibrateSignalType(ptr, out st, out outStatus);
+        }
+	    public byte WriteCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus)
+        {
+            return writeCalibrateSignalType(ptr, st, out outStatus);
         }
 
         public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -6641,6 +6930,28 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        
+        public byte ReadLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus)
+        {
+            return readLedStateNeuroEEG(ptr, out minBrightnessPrcOut, out maxBrightnessPrcOut, out outStatus);
+        }
+        public byte WriteLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus)
+        {
+            return writeLedStateNeuroEEG(ptr, minBrightnessPrc, maxBrightnessPrc, out outStatus);
+        }
+
+        public byte ReadBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus)
+        {
+            return readBatteryGaugeState(ptr, out batteryGaugeOut, out outStatus);
+        }
+        public byte AddBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryGaugeStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryGaugeStateCallback(IntPtr handle)
+        {
+            removeBatteryGaugeStateCallback(handle);
         }
         public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
@@ -6908,34 +7219,32 @@ namespace NeuroSDK
 		[DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte writeSamplingFrequencySensor(IntPtr ptr, SensorSamplingFrequency samplingFrequency, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
-    
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern int getMaxStimulPhasesCountSensor(IntPtr ptr);
 
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte readStimPrograms(IntPtr ptr, [In, Out] StimulPhase[] stimProgramsOut, ref int szStimProgramsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
 	private static extern byte writeStimPrograms(IntPtr ptr, StimulPhase[] stimPrograms, int szStimPrograms, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte readNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
 
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte readNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	private static extern byte writeNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
+
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern byte  addNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void removeNeuroStimSyncStateCallback(IntPtr handle);
+	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern byte addStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
     [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
     private static extern void removeStimModeCallback(IntPtr handle);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte readPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte readPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	private static extern byte writePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus);
-
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern byte  addPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
-    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void removePhotoStimSyncStateCallback(IntPtr handle);
-	    [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern byte readSupportedEEGChannels(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
 
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -7091,6 +7400,8 @@ namespace NeuroSDK
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readSupportedChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readActiveChannelsNeuroEEG(IntPtr ptr, [In, Out] EEGChannelInfo[] channelsOut, ref int szchannelsInOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte readFileSystemDiskInfoNeuroEEG(IntPtr ptr, out SensorDiskInfo diskInfoOut, out OpStatus outStatus);
@@ -7112,10 +7423,15 @@ namespace NeuroSDK
         private static extern byte fileStreamAutosaveNeuroEEG(IntPtr ptr, string fileName, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte fileStreamReadNeuroEEG(IntPtr ptr, string fileName, uint totalSize, uint offsetStart, out OpStatus outStatus);
+
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr readPhotoStimNeuroEEG(IntPtr ptr);
+        private static extern IntPtr readModuleStimNeuroEEG(IntPtr ptr);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
-	    private static extern byte writePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus);
+	    private static extern byte writeModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte readCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+	    private static extern byte writeCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus);
 
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte addFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
@@ -7129,6 +7445,18 @@ namespace NeuroSDK
         // signalOut.Samples and resistOut.Values - Required created manual! Actual size signalOut.SzSamples and resistOut.SzValues required set! Recommended channel size - NEURO_EEG_MAX_CH_COUNT. signalOut.SzSamples and resistOut.SzValues after invoke automatically updated
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte parseRawSignalNeuroEEG(byte[] data, ref uint szDataInOut, IntPtr processParam, [In, Out] SignalChannelsDataNative[] signalOut, ref uint szSignalInOut, [In, Out] ResistChannelsDataNative[] resistOut, ref uint szResistInOut, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte writeLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus);
+
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte readBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern byte addBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus);
+        [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
+        private static extern void removeBatteryGaugeStateCallback(IntPtr handle);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
         private static extern byte  readAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus);
         [DllImport(LibNameOS, CallingConvention = CallingConvention.Cdecl)]
@@ -7587,11 +7915,6 @@ namespace NeuroSDK
         {
             return writeSamplingFrequencySensor(ptr, samplingFrequency, out outStatus);
         }
-        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
-        {
-            return readStimMode(ptr, out modeOut, out outStatus);
-        }
-
         public byte ReadStimPrograms(IntPtr ptr, out StimulPhase[] stimProgramsOut, out OpStatus outStatus)
         {
             int sz = getMaxStimulPhasesCountSensor(ptr);
@@ -7608,36 +7931,31 @@ namespace NeuroSDK
         {
             return writeStimPrograms(ptr, stimPrograms, stimPrograms.Length, out outStatus);
         }
-
-        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte ReadStimMode(IntPtr ptr, out SensorStimulMode modeOut, out OpStatus outStatus)
         {
-            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return readStimMode(ptr, out modeOut, out outStatus);
         }
-        public void RemoveStimModeCallback(IntPtr handle)
+        public byte ReadNeuroStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
         {
-            removeStimModeCallback(handle);
-        }
-        public byte ReadPhotoStimSyncState(IntPtr ptr, out SensorStimulSyncState stateOut, out OpStatus outStatus)
-        {
-            return readPhotoStimSyncState(ptr, out stateOut, out outStatus);
+            return readNeuroStimSyncState(ptr, out stateOut, out outStatus);
         }
 
-        public byte ReadPhotoStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
+        public byte ReadNeuroStimTimeDefer(IntPtr ptr, out double timeOut, out OpStatus outStatus)
         {
-            return readPhotoStimTimeDefer(ptr, out timeOut, out outStatus);
+            return readNeuroStimTimeDefer(ptr, out timeOut, out outStatus);
         }
-        public byte WritePhotoStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
+        public byte WriteNeuroStimTimeDefer(IntPtr ptr, double time, out OpStatus outStatus)
         {
-            return writePhotoStimTimeDefer(ptr, time, out outStatus);
+            return writeNeuroStimTimeDefer(ptr, time, out outStatus);
         }
 
-        public byte AddPhotoStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        public byte AddNeuroStimSyncStateCallback(IntPtr ptr, StimulSyncStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
         {
-            return addPhotoStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+            return addNeuroStimSyncStateCallback(ptr, callback, out handleOut, userData, out outStatus);
         }
-        public void RemovePhotoStimSyncStateCallback(IntPtr handle)
+        public void RemoveNeuroStimSyncStateCallback(IntPtr handle)
         {
-            removePhotoStimSyncStateCallback(handle);
+            removeNeuroStimSyncStateCallback(handle);
         }
         public byte ReadSupportedEEGChannels(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
         {
@@ -7651,6 +7969,14 @@ namespace NeuroSDK
                 channelsOut = chs;
             }
             return res;
+        }
+        public byte AddStimModeCallback(IntPtr ptr, StimulModeCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addStimModeCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveStimModeCallback(IntPtr handle)
+        {
+            removeStimModeCallback(handle);
         }
 
 
@@ -7789,6 +8115,19 @@ namespace NeuroSDK
             }
             return res;
         }
+        public byte ReadActiveChannelsNeuroEEG(IntPtr ptr, out EEGChannelInfo[] channelsOut, out OpStatus outStatus)
+        {
+            var cnt = getChannelsCountSensor(ptr);
+            channelsOut = new EEGChannelInfo[cnt];
+            var res = readActiveChannelsNeuroEEG(ptr, channelsOut, ref cnt, out outStatus);
+            if (cnt != channelsOut.Length)
+            {
+                var chs = new EEGChannelInfo[cnt];
+                Array.Copy(channelsOut, chs, cnt);
+                channelsOut = chs;
+            }
+            return res;
+        }
         public byte ReadFilesystemStatusNeuroEEG(IntPtr ptr, out NeuroEEGFSStatus filesystemStatusOut, out OpStatus outStatus)
         {
             return readFilesystemStatusNeuroEEG(ptr, out filesystemStatusOut, out outStatus);
@@ -7843,13 +8182,22 @@ namespace NeuroSDK
         {
             return fileStreamReadNeuroEEG(ptr, fileName, totalSize, offsetStart, out outStatus);
         }
-        public IntPtr ReadPhotoStimNeuroEEG(IntPtr ptr)
+
+        public IntPtr ReadModuleStimNeuroEEG(IntPtr ptr)
         {
-            return readPhotoStimNeuroEEG(ptr);
+            return readModuleStimNeuroEEG(ptr);
         }
-	    public byte WritePhotoStimNeuroEEG(IntPtr ptr, IntPtr ptrPhotoStim, out OpStatus outStatus)
+	    public byte WriteModuleStimNeuroEEG(IntPtr ptr, IntPtr ptrNeuroStim, out OpStatus outStatus)
         {
-            return writePhotoStimNeuroEEG(ptr, ptrPhotoStim, out outStatus);
+            return writeModuleStimNeuroEEG(ptr, ptrNeuroStim, out outStatus);
+        }
+	    public byte ReadCalibrateSignalType(IntPtr ptr, out SensorStimulType st, out OpStatus outStatus)
+        {
+            return readCalibrateSignalType(ptr, out st, out outStatus);
+        }
+	    public byte WriteCalibrateSignalType(IntPtr ptr, SensorStimulType st, out OpStatus outStatus)
+        {
+            return writeCalibrateSignalType(ptr, st, out outStatus);
         }
 
         public byte AddFileStreamReadCallbackNeuroEEG(IntPtr ptr, FileStreamReadCallbackNeuroEEGSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
@@ -7912,6 +8260,28 @@ namespace NeuroSDK
             }
             szDataReadyOut = szReady;
             return res;
+        }
+        
+        public byte ReadLedStateNeuroEEG(IntPtr ptr, out double minBrightnessPrcOut, out double maxBrightnessPrcOut, out OpStatus outStatus)
+        {
+            return readLedStateNeuroEEG(ptr, out minBrightnessPrcOut, out maxBrightnessPrcOut, out outStatus);
+        }
+        public byte WriteLedStateNeuroEEG(IntPtr ptr, double minBrightnessPrc, double maxBrightnessPrc, out OpStatus outStatus)
+        {
+            return writeLedStateNeuroEEG(ptr, minBrightnessPrc, maxBrightnessPrc, out outStatus);
+        }
+
+        public byte ReadBatteryGaugeState(IntPtr ptr, out SensorBatteryGauge batteryGaugeOut, out OpStatus outStatus)
+        {
+            return readBatteryGaugeState(ptr, out batteryGaugeOut, out outStatus);
+        }
+        public byte AddBatteryGaugeStateCallback(IntPtr ptr, BatteryGaugeStateCallbackSensor callback, out IntPtr handleOut, IntPtr userData, out OpStatus outStatus)
+        {
+            return addBatteryGaugeStateCallback(ptr, callback, out handleOut, userData, out outStatus);
+        }
+        public void RemoveBatteryGaugeStateCallback(IntPtr handle)
+        {
+            removeBatteryGaugeStateCallback(handle);
         }
         public byte ReadAmplifierParamSmartBand(IntPtr ptr, out SmartBandAmplifierParamNative ampParamOut, out OpStatus outStatus)
         {
