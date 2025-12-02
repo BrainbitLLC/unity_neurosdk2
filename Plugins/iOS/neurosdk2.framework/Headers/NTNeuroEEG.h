@@ -6,11 +6,11 @@
 #include "NTSensor.h"
 
 @interface NTNeuroEEG : NTSensor
-- (instancetype)init NS_UNAVAILABLE;
+- ( instancetype _Nonnull )init NS_UNAVAILABLE;
 
 + (NSNumber*_Nonnull) getMaxChCount;
 
-@property (NS_NONATOMIC_IOSONLY) NSNumber* SurveyId;
+@property (NS_NONATOMIC_IOSONLY) NSNumber* _Nonnull SurveyId;
 @property (NS_NONATOMIC_IOSONLY, readonly) NTSensorAmpMode AmpMode;
 @property (NS_NONATOMIC_IOSONLY, readonly) NSArray<NTEEGChannelInfo*>*_Nullable SupportedChannels;
 @property (NS_NONATOMIC_IOSONLY, readonly) NTNeuroEEGFSStatus*_Nonnull FSStatus;

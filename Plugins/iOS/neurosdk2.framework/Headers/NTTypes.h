@@ -84,7 +84,8 @@ typedef NS_ENUM (UInt8, NTSensorFeature)
     NTSensorFeatureAcousticStimulator,
     NTSensorFeatureFlashCard,
     NTSensorFeatureLedChannels,
-    NTSensorFeatureSignalWithResist
+    NTSensorFeatureSignalWithResist,
+    NTSensorFeaturePulseOximeter
 };
 
 typedef NS_ENUM (UInt8, NTSensorFirmwareMode){
@@ -129,7 +130,11 @@ typedef NS_ENUM (UInt8, NTSensorCommand)
     NTSensorCommandFileSystemDisable,
     NTSensorCommandFileSystemStreamClose,
     NTSensorCommandStartCalibrateSignal,
-    NTSensorCommandStopCalibrateSignal
+    NTSensorCommandStopCalibrateSignal,
+    NTSensorCommandPhotoStimEnable,
+    NTSensorCommandPhotoStimDisable,
+    NTSensorCommandStartPulseOximeter,
+    NTSensorCommandStopPulseOximeter
 };
 
 typedef NS_ENUM (UInt8, NTSensorParameter) {
@@ -173,7 +178,18 @@ typedef NS_ENUM (UInt8, NTSensorParameter) {
     NTSensorParameterReferentsGround,
     NTSensorParameterSamplingFrequencyEnvelope,
     NTSensorParameterChannelConfiguration,
-    NTSensorParameterElectrodeState
+    NTSensorParameterElectrodeState,
+    NTSensorParameterChannelResistConfiguration,
+    NTSensorParameterBattVoltage,
+    NTSensorParameterPhotoStimTimeDefer,
+    NTSensorParameterPhotoStimSyncState,
+    NTSensorParameterSensorPhotoStim,
+    NTSensorParameterStimMode,
+    NTSensorParameterLedChannels,
+    NTSensorParameterLedState,
+    NTSensorParameterPulseOximeterParamPack,
+    NTSensorParameterPulseOximeterState,
+    NTSensorParameterSamplingFrequencyPulseOximeter
 };
 
 typedef NS_ENUM (UInt8, NTSensorParamAccess) {
@@ -224,6 +240,7 @@ typedef NS_ENUM (UInt8, NTSensorSamplingFrequency) {
 	NTSensorSamplingFrequencyHz32000,
 	NTSensorSamplingFrequencyHz48000,
 	NTSensorSamplingFrequencyHz64000,
+    NTSensorSamplingFrequencyHz50,
     NTSensorSamplingFrequencyUnsupported = 0xFF
 };
 
@@ -676,6 +693,7 @@ typedef NS_ENUM (UInt8, NTEEGRefMode)
 @property (nonatomic) enum NTEEGRefMode ReferentMode;
 @property (nonatomic) NSMutableArray<NSNumber*>* _Nonnull ChannelMode;
 @property (nonatomic) NSMutableArray<NSNumber*>* _Nonnull ChannelGain;
+@property (nonatomic) BOOL UseDiffAsRespiration;
 - (nonnull instancetype)init;
 @end
 
@@ -691,6 +709,7 @@ typedef NS_ENUM (UInt8, NTEEGRefMode)
 @property (nonatomic) UInt32 PackNum;
 @property (nonatomic) NSNumber*_Nonnull A1;
 @property (nonatomic) NSNumber*_Nonnull A2;
+@property (nonatomic) NSNumber*_Nonnull Ref;
 @property (nonatomic) NSNumber*_Nonnull Bias;
 @property (nonatomic) NSArray<NSNumber*>* _Nonnull Values;
 @end

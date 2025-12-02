@@ -1,3 +1,7 @@
+v1.0.12
+1. Updated Android lib to 16kb align
+2. Update windows lib logic
+
 v1.0.11
 Added Headband and Headphones devices
 

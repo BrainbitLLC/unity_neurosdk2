@@ -6,7 +6,7 @@
 #include "NTSensor.h"
 
 @interface NTBrainBit : NTSensor
-- (instancetype)init NS_UNAVAILABLE;
+- (instancetype _Nonnull )init NS_UNAVAILABLE;
 
 @property (NS_NONATOMIC_IOSONLY, readwrite) NTSensorGain Gain;
 
